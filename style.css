@@ -270,6 +270,13 @@ button.full, a.btn.full { width: 100%; text-align: center; }
 }
 .ledger .winner-cell { color: var(--gold-soft); }
 
+.row-action {
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 6px;
+}
+.row-action:hover { background: rgba(212,175,55,0.15) !important; }
+
 .score-input-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
