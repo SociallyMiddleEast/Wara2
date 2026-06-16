@@ -136,7 +136,7 @@ const type = params.get("type"); // "400" | "tarneeb" | "likha" | "tawle"
 const RULES = {
   "tarneeb": { label: "Tarneeb", threshold: 31, allowNegative: true, perPlayer: false, tarneebBidMode: true },
   "400":     { label: "400",     threshold: 41, allowNegative: true, perPlayer: true, bidMode: true },
-  "likha":   { label: "Likha",   threshold: 101, allowNegative: false, perPlayer: true, roundSum: 36 }
+  "likha":   { label: "Likha",   threshold: 101, allowNegative: false, perPlayer: true, roundSum: 36, lowestWins: true }
 };
 
 // 400 bid -> points table (minimum bid is 2)
@@ -181,7 +181,7 @@ function init() {
     : r.tarneebBidMode
     ? `${r.label} · ends at ${r.threshold}+ · bid 7-12 or 26 (all 13), success = tricks won, fail = lose bid`
     : r.roundSum !== undefined
-    ? `${r.label} · ends at ${r.threshold}+ · add only · round must total ${r.roundSum}`
+    ? `${r.label} · add only · round must total ${r.roundSum} · reaching ${r.threshold}+ LOSES for that player`
     : r.label + ` · ends at ${r.threshold}+ · ${r.allowNegative ? "+/− allowed" : "add only"}`;
   document.getElementById("startBtn").addEventListener("click", startGame);
   document.getElementById("addRoundBtn").addEventListener("click", addRound);
@@ -631,36 +631,56 @@ function checkGameEnd() {
 
   if (r.perPlayer) {
     // Team A = players 0,1 ; Team B = players 2,3
-    // A team wins as soon as EITHER of its players individually reaches the threshold.
-    const teamAReached = state.playerTotals[0] >= r.threshold || state.playerTotals[1] >= r.threshold;
-    const teamBReached = state.playerTotals[2] >= r.threshold || state.playerTotals[3] >= r.threshold;
+    // A team crosses the threshold as soon as EITHER of its players individually reaches it.
+    const teamACrossed = state.playerTotals[0] >= r.threshold || state.playerTotals[1] >= r.threshold;
+    const teamBCrossed = state.playerTotals[2] >= r.threshold || state.playerTotals[3] >= r.threshold;
 
-    if (!teamAReached && !teamBReached) return;
+    if (!teamACrossed && !teamBCrossed) return;
 
-    let winningTeam;
-    if (teamAReached && teamBReached) {
-      // Both teams crossed in the same round — compare each team's best (max) player score
-      const aBest = Math.max(state.playerTotals[0], state.playerTotals[1]);
-      const bBest = Math.max(state.playerTotals[2], state.playerTotals[3]);
-      if (aBest === bBest) return; // tie at/above threshold: keep playing
-      winningTeam = aBest > bBest ? 0 : 1;
+    let winningTeam; // the team that comes out on top, regardless of how
+
+    if (r.lowestWins) {
+      // Crossing the threshold means that team LOSES. The other team wins.
+      if (teamACrossed && teamBCrossed) {
+        // Both crossed in the same round — the team with the lower max score "loses less", so it wins.
+        const aBest = Math.max(state.playerTotals[0], state.playerTotals[1]);
+        const bBest = Math.max(state.playerTotals[2], state.playerTotals[3]);
+        if (aBest === bBest) return; // tie: keep playing
+        winningTeam = aBest < bBest ? 0 : 1; // lower score wins
+      } else {
+        winningTeam = teamACrossed ? 1 : 0; // the team that crossed loses, so the OTHER team wins
+      }
     } else {
-      winningTeam = teamAReached ? 0 : 1;
+      // Crossing the threshold means that team WINS (e.g. 400).
+      if (teamACrossed && teamBCrossed) {
+        const aBest = Math.max(state.playerTotals[0], state.playerTotals[1]);
+        const bBest = Math.max(state.playerTotals[2], state.playerTotals[3]);
+        if (aBest === bBest) return; // tie: keep playing
+        winningTeam = aBest > bBest ? 0 : 1;
+      } else {
+        winningTeam = teamACrossed ? 0 : 1;
+      }
     }
 
     state.finished = true;
     const winners = winningTeam === 0 ? [names[0], names[1]] : [names[2], names[3]];
     const winnerIdxs = winningTeam === 0 ? [0, 1] : [2, 3];
-    const finalScore = Math.max(state.playerTotals[winnerIdxs[0]], state.playerTotals[winnerIdxs[1]]);
+    const finalScore = r.lowestWins
+      ? Math.min(state.playerTotals[winnerIdxs[0]], state.playerTotals[winnerIdxs[1]])
+      : Math.max(state.playerTotals[winnerIdxs[0]], state.playerTotals[winnerIdxs[1]]);
     state.winningTeam = winners;
     state.finalScore = finalScore;
 
     disableInputs();
     renderLedger();
 
+    const reachedNote = r.lowestWins
+      ? `opponents reached ${r.threshold}+`
+      : `reached ${r.threshold}+`;
+
     document.getElementById("winnerText").textContent = `${winners.join(" & ")} win!`;
     document.getElementById("winnerSub").textContent =
-      `${names.map((n, i) => `${n}: ${state.playerTotals[i]}`).join(" · ")} (reached ${r.threshold}+)`;
+      `${names.map((n, i) => `${n}: ${state.playerTotals[i]}`).join(" · ")} (${reachedNote})`;
     document.getElementById("winnerBanner").style.display = "";
     launchFireworks();
 
