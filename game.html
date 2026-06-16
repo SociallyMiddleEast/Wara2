@@ -74,7 +74,10 @@
 
     <div class="score-input-row" id="roundInputRow"></div>
     <div class="error" id="roundError"></div>
-    <button class="full" id="addRoundBtn" style="margin-top:14px;">Add round</button>
+    <div class="bottom-nav" style="margin-top:14px;">
+      <button class="full" id="addRoundBtn">Add round</button>
+      <button class="secondary" id="cancelEditBtn" style="display:none;" onclick="cancelEdit()">Cancel</button>
+    </div>
   </div>
 
   <!-- FIREWORKS OVERLAY -->
@@ -246,6 +249,14 @@ function buildLedgerHeader() {
     tdB.textContent = "0";
     totalRow.appendChild(tdB);
   }
+
+  // Empty trailing header/total cell for the per-row actions column
+  const thActions = document.createElement("th");
+  thActions.style.width = "70px";
+  headRow.appendChild(thActions);
+
+  const tdActions = document.createElement("td");
+  totalRow.appendChild(tdActions);
 }
 
 function buildRoundInputs() {
@@ -344,10 +355,11 @@ function buildRoundInputs() {
   }
 }
 
-function addRound() {
-  if (state.finished) return;
+// Reads the current round-input fields and returns a round entry for the
+// active game type, or null (with errEl set) if invalid. Does NOT clear
+// inputs or mutate state — callers decide what to do with the result.
+function buildRoundFromInputs(errEl) {
   const r = RULES[type];
-  const errEl = document.getElementById("roundError");
   errEl.textContent = "";
 
   if (r.tarneebBidMode) {
@@ -358,7 +370,7 @@ function addRound() {
 
     if (Number.isNaN(tricksWon) || tricksWon < 0 || tricksWon > 13) {
       errEl.textContent = "Enter tricks won by the bidding team (0-13).";
-      return;
+      return null;
     }
 
     const requiredTricks = bid === 26 ? 13 : bid;
@@ -376,12 +388,10 @@ function addRound() {
     const a = bidTeam === "a" ? bidderScore : opponentScore;
     const b = bidTeam === "a" ? opponentScore : bidderScore;
 
-    state.rounds.push({ a, b, bidTeam, bid, tricksWon, success });
-    state.totals.a += a;
-    state.totals.b += b;
+    return { a, b, bidTeam, bid, tricksWon, success };
+  }
 
-    document.getElementById("tricksWon").value = "";
-  } else if (r.bidMode) {
+  if (r.bidMode) {
     const values = [];
     for (let i = 0; i < 4; i++) {
       const bid = Number(document.getElementById(`bid-p${i}`).value);
@@ -393,26 +403,21 @@ function addRound() {
       }
       values.push(pts);
     }
+    return values;
+  }
 
-    state.rounds.push(values);
-    values.forEach((v, i) => state.playerTotals[i] += v);
-
-    for (let i = 0; i < 4; i++) {
-      document.getElementById(`bid-p${i}`).value = "0";
-      document.querySelector(`input[name="result-p${i}"][value="made"]`).checked = true;
-    }
-  } else if (r.perPlayer) {
+  if (r.perPlayer) {
     const values = [];
     for (let i = 0; i < 4; i++) {
       const raw = document.getElementById(`round-p${i}`).value;
       const v = raw === "" ? 0 : Number(raw);
       if (Number.isNaN(v)) {
         errEl.textContent = "Enter valid numbers.";
-        return;
+        return null;
       }
       if (!r.allowNegative && v < 0) {
         errEl.textContent = `${r.label} only allows positive (add) scores.`;
-        return;
+        return null;
       }
       values.push(v);
     }
@@ -421,50 +426,176 @@ function addRound() {
       const sum = values.reduce((s, v) => s + v, 0);
       if (sum !== r.roundSum) {
         errEl.textContent = `Round total must equal ${r.roundSum} (currently ${sum}).`;
-        return;
+        return null;
       }
     }
+    return values;
+  }
 
-    state.rounds.push(values);
-    values.forEach((v, i) => state.playerTotals[i] += v);
+  // Plain team-score mode (currently unused, kept as fallback)
+  const aRaw = document.getElementById("roundA").value;
+  const bRaw = document.getElementById("roundB").value;
+  const a = aRaw === "" ? 0 : Number(aRaw);
+  const b = bRaw === "" ? 0 : Number(bRaw);
 
+  if (Number.isNaN(a) || Number.isNaN(b)) {
+    errEl.textContent = "Enter valid numbers.";
+    return null;
+  }
+  if (!r.allowNegative && (a < 0 || b < 0)) {
+    errEl.textContent = `${r.label} only allows positive (add) scores.`;
+    return null;
+  }
+  return { a, b };
+}
+
+// Clears the round-input fields back to their defaults.
+function clearRoundInputs() {
+  const r = RULES[type];
+  if (r.tarneebBidMode) {
+    document.getElementById("tricksWon").value = "";
+  } else if (r.bidMode) {
+    for (let i = 0; i < 4; i++) {
+      document.getElementById(`bid-p${i}`).value = "0";
+      document.querySelector(`input[name="result-p${i}"][value="made"]`).checked = true;
+    }
+  } else if (r.perPlayer) {
     for (let i = 0; i < 4; i++) document.getElementById(`round-p${i}`).value = "";
   } else {
-    const aRaw = document.getElementById("roundA").value;
-    const bRaw = document.getElementById("roundB").value;
-    const a = aRaw === "" ? 0 : Number(aRaw);
-    const b = bRaw === "" ? 0 : Number(bRaw);
-
-    if (Number.isNaN(a) || Number.isNaN(b)) {
-      errEl.textContent = "Enter valid numbers.";
-      return;
-    }
-    if (!r.allowNegative && (a < 0 || b < 0)) {
-      errEl.textContent = `${r.label} only allows positive (add) scores.`;
-      return;
-    }
-
-    state.rounds.push({ a, b });
-    state.totals.a += a;
-    state.totals.b += b;
-
     document.getElementById("roundA").value = "";
     document.getElementById("roundB").value = "";
   }
+}
 
+// Populates the round-input fields from an existing round entry, for editing.
+function fillRoundInputs(rnd) {
+  const r = RULES[type];
+  if (r.tarneebBidMode) {
+    document.getElementById("bidTeam").value = rnd.bidTeam;
+    document.getElementById("tarneebBid").value = rnd.bid;
+    document.getElementById("tricksWon").value = rnd.tricksWon;
+  } else if (r.bidMode) {
+    // rnd is [pts0, pts1, pts2, pts3] — we can't recover the exact bid that
+    // produced a given point value unambiguously when 0, so default to "no
+    // bid"/made and let the user re-pick if it was a real bid.
+    for (let i = 0; i < 4; i++) {
+      const pts = rnd[i];
+      const abs = Math.abs(pts);
+      const matchingBid = Object.keys(BID_POINTS).find(b => BID_POINTS[b] === abs);
+      document.getElementById(`bid-p${i}`).value = matchingBid || "0";
+      const resultVal = pts < 0 ? "failed" : "made";
+      document.querySelector(`input[name="result-p${i}"][value="${resultVal}"]`).checked = true;
+    }
+  } else if (r.perPlayer) {
+    for (let i = 0; i < 4; i++) document.getElementById(`round-p${i}`).value = rnd[i];
+  } else {
+    document.getElementById("roundA").value = rnd.a;
+    document.getElementById("roundB").value = rnd.b;
+  }
+}
+
+// Recomputes totals/playerTotals from scratch based on state.rounds.
+function recalcTotals() {
+  const r = RULES[type];
+  if (r.perPlayer) {
+    state.playerTotals = [0, 0, 0, 0];
+    state.rounds.forEach(rnd => {
+      rnd.forEach((v, i) => state.playerTotals[i] += v);
+    });
+  } else {
+    state.totals = { a: 0, b: 0 };
+    state.rounds.forEach(rnd => {
+      state.totals.a += rnd.a;
+      state.totals.b += rnd.b;
+    });
+  }
+}
+
+let editingIndex = null; // round index currently being edited, or null
+
+function addRound() {
+  if (state.finished) return;
+  const errEl = document.getElementById("roundError");
+
+  const result = buildRoundFromInputs(errEl);
+  if (result === null) return;
+
+  if (editingIndex !== null) {
+    // Save edit to existing round
+    state.rounds[editingIndex] = result;
+    recalcTotals();
+    exitEditMode();
+  } else {
+    // Append new round
+    state.rounds.push(result);
+    const r = RULES[type];
+    if (r.perPlayer) {
+      result.forEach((v, i) => state.playerTotals[i] += v);
+    } else {
+      state.totals.a += result.a;
+      state.totals.b += result.b;
+    }
+  }
+
+  clearRoundInputs();
   renderLedger();
   checkGameEnd();
+}
+
+function startEditRound(index) {
+  if (state.finished) return;
+  editingIndex = index;
+  fillRoundInputs(state.rounds[index]);
+  document.getElementById("addRoundBtn").textContent = `Save round ${index + 1}`;
+  document.getElementById("cancelEditBtn").style.display = "";
+  document.getElementById("roundError").textContent = "";
+  document.getElementById("roundInputRow").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function exitEditMode() {
+  editingIndex = null;
+  document.getElementById("addRoundBtn").textContent = "Add round";
+  document.getElementById("cancelEditBtn").style.display = "none";
+}
+
+function cancelEdit() {
+  clearRoundInputs();
+  document.getElementById("roundError").textContent = "";
+  exitEditMode();
+}
+
+function deleteRound(index) {
+  if (state.finished) return;
+  if (!confirm(`Delete round ${index + 1}? This can't be undone.`)) return;
+
+  state.rounds.splice(index, 1);
+  recalcTotals();
+  if (editingIndex === index) {
+    cancelEdit();
+  } else if (editingIndex !== null && editingIndex > index) {
+    editingIndex -= 1; // shift to stay pointed at the same round
+  }
+  renderLedger();
 }
 
 function renderLedger() {
   const r = RULES[type];
   const body = document.getElementById("ledgerBody");
+  const canEdit = !state.finished;
+
+  const actionsCell = (i) => canEdit ? `
+    <td style="white-space:nowrap;">
+      <button type="button" class="row-action" onclick="startEditRound(${i})" title="Edit round" style="background:none; border:none; padding:4px; cursor:pointer; font-size:0.95rem;">✏️</button>
+      <button type="button" class="row-action" onclick="deleteRound(${i})" title="Delete round" style="background:none; border:none; padding:4px; cursor:pointer; font-size:0.95rem;">🗑️</button>
+    </td>
+  ` : "";
 
   if (r.perPlayer) {
     body.innerHTML = state.rounds.map((rnd, i) => `
       <tr>
         <td class="row-num">${i + 1}</td>
         ${rnd.map(v => `<td>${v > 0 ? "+" : ""}${v}</td>`).join("")}
+        ${actionsCell(i)}
       </tr>
     `).join("");
     state.playerTotals.forEach((v, i) => {
@@ -485,6 +616,7 @@ function renderLedger() {
           <td class="row-num">${i + 1}</td>
           <td>${rnd.a > 0 ? "+" : ""}${rnd.a}${rnd.bidTeam === "a" ? note : ""}</td>
           <td>${rnd.b > 0 ? "+" : ""}${rnd.b}${rnd.bidTeam === "b" ? note : ""}</td>
+          ${actionsCell(i)}
         </tr>
       `;
     }).join("");
@@ -524,6 +656,7 @@ function checkGameEnd() {
     state.finalScore = finalScore;
 
     disableInputs();
+    renderLedger();
 
     document.getElementById("winnerText").textContent = `${winners.join(" & ")} win!`;
     document.getElementById("winnerSub").textContent =
@@ -552,6 +685,7 @@ function checkGameEnd() {
     state.finalScore = score;
 
     disableInputs();
+    renderLedger();
 
     document.getElementById("winnerText").textContent = `${winners.join(" & ")} win!`;
     document.getElementById("winnerSub").textContent =
@@ -563,6 +697,7 @@ function checkGameEnd() {
 
 function disableInputs() {
   document.getElementById("addRoundBtn").disabled = true;
+  document.getElementById("cancelEditBtn").style.display = "none";
   document.querySelectorAll("#roundInputRow input, #roundInputRow select").forEach(el => el.disabled = true);
 }
 
