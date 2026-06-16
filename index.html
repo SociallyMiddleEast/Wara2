@@ -23,7 +23,7 @@
     <h2 style="margin-top:0;">Welcome back</h2>
 
     <label for="username">Username</label>
-    <input type="text" id="username" autocomplete="username" placeholder="e.g. Miguel">
+    <input type="text" id="username" autocomplete="username" placeholder="e.g. elie">
 
     <label for="password">Password</label>
     <input type="password" id="password" autocomplete="current-password" placeholder="••••••••">
@@ -33,8 +33,8 @@
     <button class="full" id="loginBtn" style="margin-top: 18px;">Sign in</button>
 
     <p class="token-note">
-      Accounts are managed by Socially ©. Ask for your access
-      to site to by contacting +961 70 234 138.
+      Accounts are managed in <code>users.json</code> in this repo. Ask whoever maintains
+      the site to add your username, name, password, phone, and image.
     </p>
   </div>
 </div>
@@ -65,7 +65,7 @@ async function login() {
     const users = await fetchUsers();
 
     const match = (users || []).find(
-      u => u.username.toLowerCase() === username.toLowerCase() && u.password === password
+      u => String(u.username).toLowerCase() === username.toLowerCase() && String(u.password) === password
     );
 
     if (!match) {
