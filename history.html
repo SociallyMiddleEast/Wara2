@@ -51,16 +51,30 @@
 const session = requireLogin();
 if (session) renderUserChip(session);
 
-const myFullName = `${session.firstName} ${session.lastName}`.trim();
+const myFirstName = session.firstName.trim().toLowerCase();
+const myFullName = `${session.firstName} ${session.lastName}`.trim().toLowerCase();
+
+// Returns true if a stored player name matches the logged-in user.
+// Matches if the stored name equals either:
+//   - just the user's firstName (e.g. "Charbel")
+//   - the user's full name (e.g. "Charbel Zaarour")
+// Comparison is case-insensitive.
+function nameMatchesMe(name) {
+  if (!name) return false;
+  const n = name.trim().toLowerCase();
+  return n === myFirstName || n === myFullName;
+}
 
 // Returns true if the logged-in user participated in this game record.
 function userIsInGame(g) {
   if (g.type === "tawle") {
     const players = g.players || [];
-    return players.includes(myFullName) || g.winner === myFullName || g.loser === myFullName;
+    return players.some(nameMatchesMe) ||
+           nameMatchesMe(g.winner) ||
+           nameMatchesMe(g.loser);
   }
   const players = g.players || [];
-  return players.includes(myFullName);
+  return players.some(nameMatchesMe);
 }
 
 function gameOpponents(g) {
@@ -71,7 +85,7 @@ function gameOpponents(g) {
   } else {
     players = g.players || [];
   }
-  return players.filter(p => p && p !== myFullName);
+  return players.filter(p => p && !nameMatchesMe(p));
 }
 
 let allGames = [];
@@ -81,6 +95,14 @@ async function load() {
   const listEl = document.getElementById("historyList");
   try {
     allGames = await fetchHistory();
+
+    // DEBUG — remove once working
+    console.log("=== SESSION ===", JSON.stringify({ myFirstName, myFullName }));
+    console.log("=== ALL GAMES ===", JSON.stringify(allGames));
+    allGames.forEach((g, i) => {
+      console.log(`Game ${i}: type=${g.type} players=`, g.players, typeof g.players);
+    });
+
     myGames = allGames.filter(userIsInGame);
 
     if (myGames.length === 0) {
