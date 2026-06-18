@@ -32,8 +32,16 @@
     <label for="phone">Phone number</label>
     <input type="text" id="phone" placeholder="+961...">
 
-    <label for="image">Profile image URL</label>
-    <input type="text" id="image" placeholder="https://...">
+    <label>Profile photo</label>
+    <div style="display:flex; align-items:center; gap:14px; margin-bottom:6px;">
+      <img id="imagePreview" src="" alt="" style="width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid var(--gold); background: rgba(0,0,0,0.2);">
+      <div style="flex:1;">
+        <input type="file" id="imageFile" accept="image/*" style="padding:8px; font-size:0.85rem;">
+        <div style="font-size:0.72rem; opacity:0.6; margin-top:6px;">
+          Pick from your photo library or take a photo. Auto-resized before upload.
+        </div>
+      </div>
+    </div>
 
     <label for="password">New password</label>
     <input type="password" id="password" placeholder="Leave blank to keep current password" autocomplete="new-password">
@@ -54,11 +62,66 @@
 const session = requireLogin();
 if (session) renderUserChip(session);
 
+// Pre-fill fields
 document.getElementById("username").value = session.username || "";
 document.getElementById("firstName").value = session.firstName || "";
 document.getElementById("lastName").value = session.lastName || "";
 document.getElementById("phone").value = session.phone || "";
-document.getElementById("image").value = session.image || "";
+
+// Show current image or initials placeholder
+const defaultImageUrl = () => 'https://api.dicebear.com/7.x/initials/svg?seed=' + encodeURIComponent(session.firstName || "U");
+document.getElementById("imagePreview").src = session.image || defaultImageUrl();
+
+let pendingImage = null; // { base64, mimeType, dataUrl } when a new photo is chosen
+
+// When user picks a photo — resize/compress it and preview immediately
+document.getElementById("imageFile").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const errEl = document.getElementById("profileError");
+  errEl.textContent = "";
+  document.getElementById("profileSuccess").textContent = "";
+
+  try {
+    const result = await resizeImage(file, 500, 0.8);
+    pendingImage = result;
+    document.getElementById("imagePreview").src = result.dataUrl;
+  } catch (err) {
+    errEl.textContent = "Could not process that image: " + err.message;
+  }
+});
+
+// Resize/compress image to maxDim px JPEG at given quality, returns { base64, mimeType, dataUrl }
+function resizeImage(file, maxDim, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Could not read file"));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("Could not load image"));
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > height && width > maxDim) {
+          height = Math.round(height * (maxDim / width));
+          width = maxDim;
+        } else if (height > maxDim) {
+          width = Math.round(width * (maxDim / height));
+          height = maxDim;
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        const mimeType = "image/jpeg";
+        const dataUrl = canvas.toDataURL(mimeType, quality);
+        resolve({ base64: dataUrl.split(",")[1], mimeType, dataUrl });
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 document.getElementById("saveBtn").addEventListener("click", saveProfile);
 
@@ -69,52 +132,49 @@ async function saveProfile() {
   successEl.textContent = "";
 
   const newUsername = document.getElementById("username").value.trim();
-  const firstName = document.getElementById("firstName").value.trim();
-  const lastName = document.getElementById("lastName").value.trim();
-  const phone = document.getElementById("phone").value.trim();
-  const image = document.getElementById("image").value.trim();
-  const password = document.getElementById("password").value;
+  const firstName   = document.getElementById("firstName").value.trim();
+  const lastName    = document.getElementById("lastName").value.trim();
+  const phone       = document.getElementById("phone").value.trim();
+  const password    = document.getElementById("password").value;
 
   if (!newUsername || !firstName || !lastName) {
     errEl.textContent = "Username, first name, and last name are required.";
     return;
   }
 
-  const fields = {
-    username: newUsername,
-    firstName,
-    lastName,
-    phone,
-    image
-  };
-  if (password) fields.password = password;
-
   const btn = document.getElementById("saveBtn");
   btn.disabled = true;
-  btn.textContent = "Saving…";
 
   try {
+    // 1. Upload image to Drive first if a new one was chosen
+    let imageUrl = session.image || "";
+
+    if (pendingImage) {
+      btn.textContent = "Uploading photo…";
+      imageUrl = await uploadProfileImage(newUsername, pendingImage.base64, pendingImage.mimeType);
+    }
+
+    // 2. Save all profile fields to the Users sheet
+    btn.textContent = "Saving…";
+    const fields = { username: newUsername, firstName, lastName, phone, image: imageUrl };
+    if (password) fields.password = password;
+
     await updateUser(session.username, fields);
 
-    // Update session with new values
-    const updatedSession = {
-      ...session,
-      username: newUsername,
-      firstName,
-      lastName,
-      phone,
-      image
-    };
+    // 3. Update session so chip and pages reflect new name/image immediately
+    const updatedSession = { ...session, username: newUsername, firstName, lastName, phone, image: imageUrl };
     sessionStorage.setItem("cg_session", JSON.stringify(updatedSession));
 
-    successEl.textContent = "Saved.";
+    pendingImage = null;
+    successEl.textContent = "✓ Profile saved.";
     renderUserChip(updatedSession);
-    btn.textContent = "Save changes";
-    btn.disabled = false;
+    document.getElementById("imagePreview").src = imageUrl || defaultImageUrl();
+
   } catch (e) {
     errEl.textContent = e.message;
-    btn.textContent = "Save changes";
+  } finally {
     btn.disabled = false;
+    btn.textContent = "Save changes";
   }
 }
 </script>
