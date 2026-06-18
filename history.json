@@ -1,3 +1,205 @@
-@@ -0,0 +1,3 @@
-{
-  "games": []
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Card Table — History</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <h1>Game History</h1>
+    <div class="user-chip" id="userChip"></div>
+  </div>
+
+  <div class="panel" id="filterPanel" style="display:none;">
+    <p class="eyebrow">Filters</p>
+    <h2 style="margin-top:0;">Find a game</h2>
+
+    <label for="gameTypeFilter">Game</label>
+    <select id="gameTypeFilter">
+      <option value="">All games</option>
+      <option value="tarneeb">Tarneeb</option>
+      <option value="400">400</option>
+      <option value="likha">Likha</option>
+      <option value="tawle">Tawle</option>
+    </select>
+
+    <label for="withPlayerFilter">With player</label>
+    <select id="withPlayerFilter">
+      <option value="">Anyone</option>
+    </select>
+  </div>
+
+  <div class="panel">
+    <p class="eyebrow">Archive</p>
+    <h2 style="margin-top:0;" id="historyHeading">Game history</h2>
+    <div id="historyList"><div class="empty-state">Loading…</div></div>
+  </div>
+
+  <div class="bottom-nav" style="margin-top:10px;">
+    <a class="btn secondary" href="app.html">← Back to games</a>
+  </div>
+</div>
+
+<script src="common.js"></script>
+<script>
+const session = requireLogin();
+if (session) renderUserChip(session);
+
+const myFirstName = session.firstName.trim().toLowerCase();
+const myFullName = `${session.firstName} ${session.lastName}`.trim().toLowerCase();
+
+// Returns true if a stored player name matches the logged-in user.
+// Matches if the stored name equals either:
+//   - just the user's firstName (e.g. "Charbel")
+//   - the user's full name (e.g. "Charbel Zaarour")
+// Comparison is case-insensitive.
+function nameMatchesMe(name) {
+  if (!name) return false;
+  const n = name.trim().toLowerCase();
+  return n === myFirstName || n === myFullName;
+}
+
+// Returns true if the logged-in user participated in this game record.
+function userIsInGame(g) {
+  if (g.type === "tawle") {
+    const players = g.players || [];
+    return players.some(nameMatchesMe) ||
+           nameMatchesMe(g.winner) ||
+           nameMatchesMe(g.loser);
+  }
+  const players = g.players || [];
+  return players.some(nameMatchesMe);
+}
+
+function gameOpponents(g) {
+  // All other players in this specific game, excluding me.
+  let players = [];
+  if (g.type === "tawle") {
+    players = g.players && g.players.length ? g.players : [g.winner, g.loser].filter(Boolean);
+  } else {
+    players = g.players || [];
+  }
+  return players.filter(p => p && !nameMatchesMe(p));
+}
+
+let allGames = [];
+let myGames = [];
+
+async function load() {
+  const listEl = document.getElementById("historyList");
+  try {
+    allGames = await fetchHistory();
+    myGames = allGames.filter(userIsInGame);
+
+    if (myGames.length === 0) {
+      document.getElementById("historyHeading").textContent = "No access";
+      listEl.innerHTML = `<div class="empty-state">
+        You haven't played any recorded games yet, so there's no history to show.
+        Play a game and it'll appear here.
+      </div>`;
+      return;
+    }
+
+    document.getElementById("filterPanel").style.display = "";
+    populateWithPlayerFilter();
+    render();
+  } catch (e) {
+    listEl.innerHTML = `<div class="empty-state">Could not load history: ${e.message}</div>`;
+  }
+}
+
+function populateWithPlayerFilter() {
+  const gameType = document.getElementById("gameTypeFilter").value;
+  const select = document.getElementById("withPlayerFilter");
+  const prevValue = select.value;
+
+  // Pool all players who ever appeared (with me) in games of the selected type
+  // (or all my games if no type selected), excluding me.
+  const pool = new Set();
+  myGames.forEach(g => {
+    if (gameType && g.type !== gameType) return;
+    gameOpponents(g).forEach(p => pool.add(p));
+  });
+
+  const names = Array.from(pool).sort((a, b) => a.localeCompare(b));
+  select.innerHTML = '<option value="">Anyone</option>' +
+    names.map(n => `<option value="${n}">${n}</option>`).join("");
+
+  if (names.includes(prevValue)) select.value = prevValue;
+}
+
+function render() {
+  const gameType = document.getElementById("gameTypeFilter").value;
+  const withPlayer = document.getElementById("withPlayerFilter").value;
+
+  let games = myGames.slice();
+
+  if (gameType) {
+    games = games.filter(g => g.type === gameType);
+  }
+  if (withPlayer) {
+    games = games.filter(g => gameOpponents(g).includes(withPlayer));
+  }
+
+  games.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  const listEl = document.getElementById("historyList");
+  if (games.length === 0) {
+    listEl.innerHTML = '<div class="empty-state">No games match these filters.</div>';
+    return;
+  }
+  listEl.innerHTML = games.map(renderHistItem).join("");
+}
+
+function renderHistItem(g) {
+  const dateStr = new Date(g.date).toLocaleString(undefined, {
+    year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
+  });
+  const typeLabel = { "400": "400", "tarneeb": "Tarneeb", "likha": "Likha", "tawle": "Tawle" }[g.type] || g.type;
+
+  let winnerStr, loserStr = "";
+  if (g.type === "tawle") {
+    winnerStr = `🏆 ${g.winner}`;
+    if (g.loser) {
+      loserStr = `<div class="hloser">lost: ${g.loser}</div>`;
+    }
+  } else {
+    const winners = g.winningTeam || [];
+    const players = g.players || [];
+    const losers = players.filter(p => !winners.includes(p));
+    winnerStr = `🏆 ${winners.join(" & ")} — ${g.finalScore ?? ""}`;
+    if (losers.length) {
+      loserStr = `<div class="hloser">lost: ${losers.join(" & ")}</div>`;
+    }
+  }
+
+  return `
+    <div class="hist-item">
+      <div>
+        <div class="hgame">${typeLabel}</div>
+        <div class="hdate">${dateStr}</div>
+      </div>
+      <div class="hwinner">
+        ${winnerStr}
+        ${loserStr}
+      </div>
+    </div>
+  `;
+}
+
+document.getElementById("gameTypeFilter").addEventListener("change", () => {
+  populateWithPlayerFilter();
+  render();
+});
+document.getElementById("withPlayerFilter").addEventListener("change", render);
+
+load();
+</script>
+</body>
+</html>
