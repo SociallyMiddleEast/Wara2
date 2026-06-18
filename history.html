@@ -96,12 +96,23 @@ async function load() {
   try {
     allGames = await fetchHistory();
 
-    // DEBUG — remove once working
-    console.log("=== SESSION ===", JSON.stringify({ myFirstName, myFullName }));
-    console.log("=== ALL GAMES ===", JSON.stringify(allGames));
-    allGames.forEach((g, i) => {
-      console.log(`Game ${i}: type=${g.type} players=`, g.players, typeof g.players);
-    });
+    // DEBUG — shows raw data on page
+    listEl.innerHTML = `
+      <div style="font-size:0.75rem; font-family:monospace; word-break:break-all; background:rgba(0,0,0,0.3); padding:12px; border-radius:8px; line-height:1.8;">
+        <div><b>My firstName:</b> "${myFirstName}"</div>
+        <div><b>My fullName:</b> "${myFullName}"</div>
+        <div><b>Total games in sheet:</b> ${allGames.length}</div>
+        ${allGames.map((g, i) => `
+          <div style="margin-top:8px; border-top:1px solid rgba(255,255,255,0.1); padding-top:8px;">
+            <b>Game ${i + 1}:</b> type=${g.type}<br>
+            players field type: ${typeof g.players}<br>
+            players value: ${JSON.stringify(g.players)}<br>
+            winningTeam: ${JSON.stringify(g.winningTeam)}<br>
+            match? ${userIsInGame(g)}
+          </div>
+        `).join("")}
+      </div>
+    `;
 
     myGames = allGames.filter(userIsInGame);
 
