@@ -84,7 +84,20 @@ async function appendGameToHistory(gameRecord) {
   return data;
 }
 
-// ---- Update a user's own profile fields ----
+// ---- Upload a profile image (base64) and get back a Drive URL ----
+async function uploadProfileImage(username, base64Data, mimeType) {
+  const res = await fetch(SHEET_API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action: "uploadImage", username, imageData: base64Data, mimeType })
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to upload image: ${res.status}`);
+  }
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data.url;
+}
 async function updateUser(username, fields) {
   const res = await fetch(SHEET_API_URL, {
     method: "POST",
