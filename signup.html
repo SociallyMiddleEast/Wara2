@@ -9,136 +9,136 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="style.css">
 <style>
-.auth-links {
-  display: flex;
-  justify-content: center;
-  margin-top: 18px;
-}
-.auth-links a {
-  font-size: .83rem; opacity: .6;
-  text-decoration: none; color: inherit;
-  transition: opacity .15s;
-}
-.auth-links a:hover { opacity: 1; }
+body { display:flex; flex-direction:column; align-items:center; min-height:100vh; justify-content:center; }
+.wrap { width:100%; max-width:400px; padding:24px 16px; }
 
-/* ── Social buttons grid ── */
-.social-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 4px;
+.brand-top { text-align:center; margin-bottom:28px; }
+.brand-top .suits { font-size:1.2rem; letter-spacing:.5em; opacity:.6; margin-bottom:8px; }
+.brand-top h1 { font-family:'Fraunces',serif; font-size:2rem; font-weight:700; margin:0; color:var(--gold); }
+
+.auth-card {
+  background:var(--surface); border:1px solid var(--line);
+  border-radius:18px; padding:28px 24px 22px;
 }
+.auth-card .eyebrow { font-size:.68rem; text-transform:uppercase; letter-spacing:.1em; opacity:.45; font-weight:700; margin:0 0 4px; }
+.auth-card h2 { font-family:'Fraunces',serif; font-size:1.45rem; font-weight:700; margin:0 0 22px; }
+
+/* Social grid */
+.social-grid { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-bottom:20px; }
 .social-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border-radius: 10px;
-  padding: 11px 12px;
-  font-size: .82rem;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: 'Inter', sans-serif;
-  border: 1px solid var(--line);
-  background: rgba(255,255,255,.04);
-  color: inherit;
-  transition: background .15s, border-color .15s;
-  white-space: nowrap;
+  position:relative;
+  display:flex; align-items:center; justify-content:center; gap:7px;
+  border-radius:10px; padding:10px 8px;
+  font-size:.8rem; font-weight:600;
+  cursor:pointer; font-family:'Inter',sans-serif;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06); color:inherit;
+  transition:background .15s, border-color .15s, transform .1s;
+  white-space:nowrap;
 }
-.social-btn:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.25); }
-.social-btn.coming-soon {
-  opacity: .38;
-  cursor: not-allowed;
-  position: relative;
-}
-.social-btn.coming-soon::after {
-  content: "soon";
-  position: absolute;
-  top: -7px; right: -4px;
-  background: var(--gold);
-  color: #1a1612;
-  font-size: .55rem;
-  font-weight: 800;
-  letter-spacing: .04em;
-  padding: 1px 5px;
-  border-radius: 8px;
-  text-transform: uppercase;
+.social-btn:hover:not(:disabled) { background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.22); transform:translateY(-1px); }
+.social-btn:active:not(:disabled) { transform:translateY(0); }
+.social-btn:disabled { opacity:.32; cursor:not-allowed; }
+.social-btn .soon-tag {
+  position:absolute; top:-8px; right:-2px;
+  background:var(--gold); color:#1a1612;
+  font-size:.5rem; font-weight:800; letter-spacing:.05em;
+  padding:2px 6px; border-radius:20px;
+  text-transform:uppercase; pointer-events:none;
 }
 
-/* ── Divider ── */
 .or-divider {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 16px 0;
-  opacity: .4;
-  font-size: .75rem;
-  text-transform: uppercase;
-  letter-spacing: .07em;
+  display:flex; align-items:center; gap:10px;
+  margin:0 0 18px;
+  font-size:.7rem; text-transform:uppercase; letter-spacing:.08em; opacity:.35;
 }
-.or-divider::before, .or-divider::after {
-  content: ""; flex: 1;
-  border-top: 1px solid var(--line);
-}
+.or-divider::before, .or-divider::after { content:""; flex:1; border-top:1px solid var(--line); }
 
-/* ── Google pre-fill card ── */
+/* Google prefill */
 .google-prefill {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: rgba(255,255,255,.05);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 12px 14px;
-  margin-bottom: 16px;
+  display:flex; align-items:center; gap:12px;
+  background:rgba(255,255,255,.05); border:1px solid var(--line);
+  border-radius:10px; padding:12px 14px; margin-bottom:16px;
 }
-.google-prefill img {
-  width: 44px; height: 44px;
-  border-radius: 50%; object-fit: cover; flex-shrink: 0;
-}
-.google-prefill .gp-info { flex: 1; min-width: 0; }
-.google-prefill .gp-name { font-weight: 600; font-size: .9rem; }
-.google-prefill .gp-email { font-size: .75rem; opacity: .55; margin-top: 2px; }
+.google-prefill img { width:42px; height:42px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+.google-prefill .gp-info { flex:1; min-width:0; }
+.google-prefill .gp-name { font-weight:600; font-size:.88rem; }
+.google-prefill .gp-email { font-size:.72rem; opacity:.5; margin-top:2px; }
 .google-prefill .gp-change {
-  font-size: .72rem; opacity: .5; cursor: pointer;
-  text-decoration: underline; background: none;
-  border: none; color: inherit; padding: 0; flex-shrink: 0;
+  font-size:.72rem; opacity:.45; cursor:pointer; text-decoration:underline;
+  background:none; border:none; color:inherit; padding:0; flex-shrink:0;
 }
+.google-prefill .gp-change:hover { opacity:.8; }
 
-/* ── Success ── */
-.success-box { text-align: center; padding: 10px 0; }
-.success-box .sb-icon { font-size: 2.5rem; margin-bottom: 10px; }
-.success-box h3 { margin: 0 0 8px; font-family: 'Fraunces', serif; }
-.success-box p { font-size: .85rem; opacity: .75; line-height: 1.6; margin: 0 0 18px; }
-.wa-btn {
-  display: inline-flex; align-items: center; gap: 8px;
-  background: #25D366; color: #fff;
-  border: none; border-radius: 10px;
-  padding: 12px 22px; font-size: .92rem; font-weight: 700;
-  cursor: pointer; text-decoration: none;
-  font-family: 'Inter', sans-serif;
+/* Fields */
+.field-group { display:flex; flex-direction:column; gap:4px; margin-bottom:12px; }
+.field-group label { font-size:.75rem; font-weight:600; opacity:.65; letter-spacing:.02em; }
+.field-group input {
+  background:rgba(0,0,0,.2); border:1px solid var(--line);
+  border-radius:9px; padding:11px 13px;
+  font-size:.92rem; color:inherit; font-family:'Inter',sans-serif;
+  transition:border-color .15s; width:100%; box-sizing:border-box;
 }
+.field-group input:focus { outline:none; border-color:var(--gold); }
+.field-group input::placeholder { opacity:.35; }
+
+/* Two column fields */
+.field-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+.btn-primary {
+  width:100%; padding:13px;
+  background:var(--gold); color:#1a1612;
+  border:none; border-radius:50px;
+  font-size:.95rem; font-weight:700;
+  cursor:pointer; font-family:'Inter',sans-serif;
+  transition:opacity .15s, transform .1s; margin-top:6px;
+}
+.btn-primary:hover { opacity:.9; transform:translateY(-1px); }
+.btn-primary:active { transform:translateY(0); }
+.btn-primary:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+
+.err { color:#e07070; font-size:.78rem; margin-top:8px; min-height:1rem; }
+
+.auth-footer {
+  display:flex; justify-content:center; margin-top:20px;
+  padding-top:18px; border-top:1px solid var(--line);
+}
+.auth-footer a { font-size:.8rem; opacity:.5; text-decoration:none; color:inherit; transition:opacity .15s; }
+.auth-footer a:hover { opacity:.9; }
+
+/* Success */
+.success-box { text-align:center; padding:10px 0; }
+.success-box .sb-icon { font-size:2.8rem; margin-bottom:12px; }
+.success-box h3 { font-family:'Fraunces',serif; margin:0 0 10px; font-size:1.3rem; }
+.success-box p { font-size:.84rem; opacity:.7; line-height:1.65; margin:0 0 20px; }
+.wa-btn {
+  display:inline-flex; align-items:center; gap:8px;
+  background:#25D366; color:#fff;
+  border:none; border-radius:50px;
+  padding:13px 24px; font-size:.9rem; font-weight:700;
+  cursor:pointer; text-decoration:none; font-family:'Inter',sans-serif;
+  transition:opacity .15s;
+}
+.wa-btn:hover { opacity:.88; }
 </style>
 </head>
 <body>
-<div class="wrap" style="max-width:420px;">
-  <div class="brand" style="justify-content:center; border-bottom:none; margin-bottom:36px;">
-    <div style="text-align:center;">
-      <div class="suit" style="display:block; margin-bottom:6px; font-size:1.4rem; letter-spacing:.4em;">♠ ♥ ♦ ♣</div>
-      <h1>Card Table</h1>
-    </div>
+<div class="wrap">
+
+  <div class="brand-top">
+    <div class="suits">♠ ♥ ♦ ♣</div>
+    <h1>Card Table</h1>
   </div>
 
-  <!-- Sign up form -->
-  <div class="panel" id="formPanel">
+  <!-- Form panel -->
+  <div class="auth-card" id="formPanel">
     <p class="eyebrow">New account</p>
-    <h2 style="margin-top:0;">Sign up</h2>
+    <h2>Create account</h2>
 
     <!-- Social buttons -->
     <div class="social-grid">
-      <!-- Google — active -->
       <button class="social-btn" onclick="triggerGoogleSignIn()">
-        <svg width="17" height="17" viewBox="0 0 18 18">
+        <svg width="16" height="16" viewBox="0 0 18 18">
           <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/>
           <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/>
           <path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/>
@@ -147,38 +147,38 @@
         Google
       </button>
 
-      <!-- Facebook — coming soon -->
-      <button class="social-btn coming-soon" disabled>
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="#1877F2">
+      <button class="social-btn" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#1877F2">
           <path d="M24 12.073C24 5.404 18.627 0 12 0S0 5.404 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.268h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
         </svg>
         Facebook
+        <span class="soon-tag">Soon</span>
       </button>
 
-      <!-- Outlook — coming soon -->
-      <button class="social-btn coming-soon" disabled>
-        <svg width="17" height="17" viewBox="0 0 24 24">
-          <path fill="#0072C6" d="M24 7.387v13.226A1.39 1.39 0 0 1 22.611 22H7.389A1.39 1.39 0 0 1 6 20.613V18l9-2.25L24 18V7.387z"/>
-          <path fill="#0072C6" d="M24 7.387L15 9.75 6 7.387V5.388A1.39 1.39 0 0 1 7.389 4h15.222A1.39 1.39 0 0 1 24 5.388v2z" opacity=".7"/>
-          <path fill="#28A8E0" d="M15 9.75l9-2.363V18l-9-2.25V9.75z" opacity=".5"/>
-          <rect fill="#0078D4" x="0" y="5" width="13" height="14" rx="1.5"/>
+      <button class="social-btn" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24">
+          <rect fill="#0078D4" width="13" height="14" rx="1.5" y="5"/>
           <path fill="#fff" d="M6.5 8.5a3 3 0 1 0 0 7 3 3 0 0 0 0-7zm0 5a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/>
+          <path fill="#0072C6" d="M24 7.387v13.226A1.39 1.39 0 0 1 22.611 22H7.389A1.39 1.39 0 0 1 6 20.613V18l9-2.25L24 18V7.387z"/>
+          <path fill="#28A8E0" d="M15 9.75l9-2.363V18l-9-2.25V9.75z" opacity=".7"/>
+          <path fill="#0072C6" d="M24 7.387L15 9.75 6 7.387V5.388A1.39 1.39 0 0 1 7.389 4h15.222A1.39 1.39 0 0 1 24 5.388v2z" opacity=".8"/>
         </svg>
         Outlook
+        <span class="soon-tag">Soon</span>
       </button>
 
-      <!-- Apple — coming soon -->
-      <button class="social-btn coming-soon" disabled>
-        <svg width="15" height="17" viewBox="0 0 814 1000" fill="currentColor">
+      <button class="social-btn" disabled>
+        <svg width="13" height="16" viewBox="0 0 814 1000" fill="currentColor">
           <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-42.3-150.3-119.8c-52.4-91.3-95.2-234.5-95.2-371.3 0-223.1 145.5-341.2 289-341.2 73.7 0 134.8 48.4 180.5 48.4 43.7 0 112.4-51.9 197.5-51.9zm-166.6-19.4c-7.7 36.4-39 65.4-72.7 65.4-5.4 0-10.8-.7-16.1-2.2C540 356 570 316 570 276c0-5.1.7-10.2 2.2-15.3C607 270.4 634 299.3 621.5 321.5z"/>
         </svg>
         Apple
+        <span class="soon-tag">Soon</span>
       </button>
     </div>
 
     <div class="or-divider">or sign up with email</div>
 
-    <!-- Google pre-fill card -->
+    <!-- Google prefill card -->
     <div class="google-prefill" id="googlePrefill" style="display:none;">
       <img id="googleAvatar" src="" alt="">
       <div class="gp-info">
@@ -188,51 +188,67 @@
       <button class="gp-change" onclick="resetGoogleSignIn()">Change</button>
     </div>
 
-    <!-- Manual name (hidden when Google used) -->
-    <div id="manualNameFields">
-      <label for="firstName">First name</label>
-      <input type="text" id="firstName" autocomplete="given-name" placeholder="Elie">
-      <label for="lastName" style="margin-top:10px;">Last name</label>
-      <input type="text" id="lastName" autocomplete="family-name" placeholder="Zaarour">
+    <!-- Name row (hidden when Google) -->
+    <div class="field-row" id="manualNameFields">
+      <div class="field-group">
+        <label for="firstName">First name</label>
+        <input type="text" id="firstName" autocomplete="given-name" placeholder="Elie">
+      </div>
+      <div class="field-group">
+        <label for="lastName">Last name</label>
+        <input type="text" id="lastName" autocomplete="family-name" placeholder="Zaarour">
+      </div>
     </div>
 
-    <label for="username" style="margin-top:10px;">Username</label>
-    <input type="text" id="username" autocomplete="username" placeholder="elie"
-      style="text-transform:lowercase;">
+    <!-- Username + phone row -->
+    <div class="field-row">
+      <div class="field-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" autocomplete="username" placeholder="elie">
+      </div>
+      <div class="field-group">
+        <label for="phone">Phone</label>
+        <input type="text" id="phone" autocomplete="tel" placeholder="+961…">
+      </div>
+    </div>
 
-    <label for="phone" style="margin-top:10px;">Phone number</label>
-    <input type="text" id="phone" autocomplete="tel" placeholder="+961 XX XXX XXX">
-
-    <!-- Manual password (hidden when Google used) -->
+    <!-- Password (hidden when Google) -->
     <div id="passwordFields">
-      <label for="password" style="margin-top:10px;">Password</label>
-      <input type="password" id="password" autocomplete="new-password" placeholder="••••••••">
-      <label for="confirm" style="margin-top:10px;">Confirm password</label>
-      <input type="password" id="confirm" autocomplete="new-password" placeholder="••••••••">
+      <div class="field-row">
+        <div class="field-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" autocomplete="new-password" placeholder="••••••">
+        </div>
+        <div class="field-group">
+          <label for="confirm">Confirm</label>
+          <input type="password" id="confirm" autocomplete="new-password" placeholder="••••••">
+        </div>
+      </div>
     </div>
 
-    <div class="error" id="signupError"></div>
-    <button class="full" id="signupBtn" style="margin-top:18px;">Create account</button>
+    <div class="err" id="signupError"></div>
+    <button class="btn-primary" id="signupBtn">Create account</button>
 
-    <div class="auth-links">
-      <a href="index.html">Already have an account? Sign in</a>
+    <div class="auth-footer">
+      <a href="index.html">Already have an account? <strong>Sign in</strong></a>
     </div>
   </div>
 
-  <!-- Success state -->
-  <div class="panel" id="successPanel" style="display:none;">
+  <!-- Success panel -->
+  <div class="auth-card" id="successPanel" style="display:none;">
     <div class="success-box">
       <div class="sb-icon">🎉</div>
       <h3>Account created!</h3>
-      <p>Your account is pending approval by the admin.<br>
-        Tap below to message them on WhatsApp — once approved you can sign in.</p>
+      <p>Your account is pending admin approval.<br>
+        Message them on WhatsApp — once approved you can sign in.</p>
       <a id="waLink" href="#" target="_blank" rel="noopener" class="wa-btn">
         💬 Message admin on WhatsApp
       </a>
       <br><br>
-      <a href="index.html" style="font-size:.82rem;opacity:.6;color:inherit;text-decoration:none;">← Back to sign in</a>
+      <a href="index.html" style="font-size:.8rem;opacity:.45;color:inherit;text-decoration:none;">← Back to sign in</a>
     </div>
   </div>
+
 </div>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -252,28 +268,24 @@ const GOOGLE_CLIENT = "719090679294-4ihaptgq611pqusbl5u95uiu03cabtub.apps.google
 
 let googleUser = null;
 
+// Auto-lowercase username
 document.getElementById("username").addEventListener("input", e => {
   const el = e.target, pos = el.selectionStart;
-  el.value = el.value.toLowerCase();
+  el.value = el.value.toLowerCase().replace(/[^a-z0-9_]/g, "");
   el.setSelectionRange(pos, pos);
 });
 
+// ── Google ──
 function triggerGoogleSignIn() {
   if (typeof google === "undefined") {
-    document.getElementById("signupError").textContent = "Google sign-in failed to load. Use the manual form below.";
+    document.getElementById("signupError").textContent = "Google sign-in is loading, please try again.";
     return;
   }
   google.accounts.id.initialize({
     client_id: GOOGLE_CLIENT, callback: handleGoogleCredential,
-    auto_select: false, cancel_on_tap_outside: true
+    auto_select: false, cancel_on_tap_outside: true, use_fedcm_for_prompt: false
   });
-  google.accounts.id.prompt((n) => {
-    if (n.isNotDisplayed() || n.isSkippedMoment()) {
-      const wrap = document.createElement("div");
-      document.getElementById("formPanel").prepend(wrap);
-      google.accounts.id.renderButton(wrap, { theme:"outline", size:"large", width:360 });
-    }
-  });
+  google.accounts.id.prompt();
 }
 
 function handleGoogleCredential(response) {
@@ -286,7 +298,6 @@ function handleGoogleCredential(response) {
     sub:       payload.sub         || ""
   };
   document.getElementById("googlePrefill").style.display    = "";
-  document.getElementById("googleBtnWrap") && (document.getElementById("googleBtnWrap").style.display = "none");
   document.getElementById("manualNameFields").style.display = "none";
   document.getElementById("passwordFields").style.display   = "none";
   document.getElementById("googleAvatar").src               = googleUser.photo;
@@ -304,15 +315,20 @@ function resetGoogleSignIn() {
   document.getElementById("passwordFields").style.display   = "";
 }
 
+// ── Sign up ──
 document.getElementById("signupBtn").addEventListener("click", signUp);
 
 async function signUp() {
-  const errEl    = document.getElementById("signupError");
+  const errEl   = document.getElementById("signupError");
   errEl.textContent = "";
+
   const username  = document.getElementById("username").value.trim().toLowerCase();
   const phone     = document.getElementById("phone").value.trim();
   const firstName = googleUser ? googleUser.firstName : document.getElementById("firstName").value.trim();
   const lastName  = googleUser ? googleUser.lastName  : document.getElementById("lastName").value.trim();
+
+  if (!firstName || !lastName) { errEl.textContent = "First and last name are required."; return; }
+  if (!username || username.length < 3) { errEl.textContent = "Username must be at least 3 characters."; return; }
 
   let passwordHash;
   if (googleUser) {
@@ -320,24 +336,17 @@ async function signUp() {
   } else {
     const password = document.getElementById("password").value;
     const confirm  = document.getElementById("confirm").value;
-    if (!firstName || !lastName) { errEl.textContent = "First and last name are required."; return; }
-    if (!password) { errEl.textContent = "Enter a password."; return; }
-    if (password.length < 4) { errEl.textContent = "Password must be at least 4 characters."; return; }
+    if (!password || password.length < 4) { errEl.textContent = "Password must be at least 4 characters."; return; }
     if (password !== confirm) { errEl.textContent = "Passwords don't match."; return; }
     passwordHash = await hashPassword(password);
   }
-
-  if (!username) { errEl.textContent = "Choose a username."; return; }
-  if (username.length < 3) { errEl.textContent = "Username must be at least 3 characters."; return; }
-  if (!/^[a-z0-9_]+$/.test(username)) { errEl.textContent = "Username: letters, numbers, underscores only."; return; }
 
   const btn = document.getElementById("signupBtn");
   btn.disabled = true; btn.textContent = "Creating account…";
 
   try {
     const res = await fetch(SHEET_API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({
         action: "signUp", username, firstName, lastName, phone,
         password: passwordHash,
