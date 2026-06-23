@@ -899,6 +899,7 @@ function buildRoundInputs() {
       row.classList.remove("cols-4");
       row.style.gridTemplateColumns = "";
       if (!document.getElementById("likhaCardMode")) {
+        likhaMode = "cards"; // always start in card picker mode
         const picker = document.createElement("div");
         picker.className = "likha-picker";
         picker.innerHTML = buildLikhaPickerHTML(names);
@@ -975,8 +976,8 @@ function buildLikhaPickerHTML(names) {
 
   return [
     '<div class="likha-tabs">',
-      '<button class="likha-tab ' + ca + '" onclick="setLikhaMode(&quot;cards&quot;)">🃏 Card picker</button>',
-      '<button class="likha-tab ' + ma + '" onclick="setLikhaMode(&quot;manual&quot;)">✏️ Manual</button>',
+      '<button class="likha-tab ' + ca + '" data-mode="cards" onclick="setLikhaMode(this.dataset.mode)">🃏 Card picker</button>',
+      '<button class="likha-tab ' + ma + '" data-mode="manual" onclick="setLikhaMode(this.dataset.mode)">✏️ Manual</button>',
     '</div>',
     '<div id="likhaCardMode" style="' + ch + '">',
       '<div class="likha-grid">' + rows + '</div>',
@@ -1160,6 +1161,7 @@ function clearRoundInputs() {
     if (r.roundSum !== undefined) {
       resetLikhaState();
       updateLikhaUI();
+      // Keep whatever mode the user chose — don't reset to cards
     } else {
       for (let i = 0; i < 4; i++) {
         const el = document.getElementById("round-p" + i);
