@@ -798,7 +798,7 @@ async function fetchLiveGames() {
 // ─────────────────────────────────────────────
 function startPolling() {
   if (pollTimer) clearInterval(pollTimer);
-  pollTimer = setInterval(pollLiveGame, 5000);
+  pollTimer = setInterval(pollLiveGame, 10000);
 }
 
 async function pollLiveGame() {
@@ -889,15 +889,16 @@ function buildRoundInputs() {
     });
   } else if (r.perPlayer) {
     if (r.roundSum !== undefined) {
-      // ── Likha card picker ──
+      // ── Likha card picker — built ONCE, never rebuilt ──
       row.classList.remove("cols-4");
       row.style.gridTemplateColumns = "";
-      const picker = document.createElement("div");
-      picker.className = "likha-picker";
-      picker.innerHTML = buildLikhaPickerHTML(names);
-      row.appendChild(picker);
-      // Attach stepper/toggle listeners after DOM insert
-      setTimeout(() => initLikhaPickerListeners(names), 0);
+      if (!document.getElementById("likhaCardMode")) {
+        const picker = document.createElement("div");
+        picker.className = "likha-picker";
+        picker.innerHTML = buildLikhaPickerHTML(names);
+        row.appendChild(picker);
+        updateLikhaUI();
+      }
     } else {
       row.classList.add("cols-4");
       names.forEach((name,i) => {
@@ -1142,7 +1143,10 @@ function clearRoundInputs() {
       resetLikhaState();
       updateLikhaUI();
     } else {
-      for (let i=0;i<4;i++) document.getElementById(`round-p${i}`).value="";
+      for (let i = 0; i < 4; i++) {
+        const el = document.getElementById("round-p" + i);
+        if (el) el.value = "";
+      }
     }
   }
   else { document.getElementById("roundA").value=""; document.getElementById("roundB").value=""; }
@@ -1197,8 +1201,8 @@ async function addRound() {
 
   clearRoundInputs();
   renderLedger();
-  await saveLiveGameState(); // auto-save every round
   checkGameEnd();
+  saveLiveGameState(); // fire-and-forget — don't block UI
 }
 
 function startEditRound(index) {
@@ -1231,7 +1235,7 @@ function deleteRound(index) {
   if (editingIndex===index) cancelEdit();
   else if (editingIndex!==null&&editingIndex>index) editingIndex-=1;
   renderLedger();
-  saveLiveGameState();
+  saveLiveGameState(); // fire-and-forget
 }
 
 function renderLedger() {
