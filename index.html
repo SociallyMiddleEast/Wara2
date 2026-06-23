@@ -87,6 +87,7 @@
   </div>
 </div>
 
+<script src="hash.js"></script>
 <script src="common.js"></script>
 <script>
 const ADMIN_WA = "+96170234138";
@@ -116,9 +117,10 @@ async function login() {
 
   try {
     const users = await fetchUsers();
+    const hashed = await hashPassword(password);
     const match = (users || []).find(
       u => String(u.username).toLowerCase() === username.toLowerCase() &&
-           String(u.password) === password
+           (String(u.password) === hashed || String(u.password) === password) // fallback for existing plain-text passwords
     );
 
     if (!match) {
