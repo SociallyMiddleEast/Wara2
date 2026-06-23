@@ -466,15 +466,12 @@ async function init() {
   document.getElementById("startBtn").addEventListener("click", startGame);
   document.getElementById("addRoundBtn").addEventListener("click", addRound);
 
-  // Show setup UI right away with a loading spinner in the pickers
-  if (type === "tawle") {
-    document.getElementById("setupPanel").style.display = "none";
-    showTawleSetup();
-  } else {
-    showSetup();
-  }
+  // Show a minimal loading state — don't show setup yet
+  // (we need to check for live games first to avoid flashing the setup panel)
+  document.getElementById("setupPanel").style.display    = "none";
+  document.getElementById("tawleSetupPanel").style.display = "none";
 
-  // Load users + live games IN PARALLEL in the background
+  // Load users + live games IN PARALLEL
   const [users, liveGames] = await Promise.all([
     fetchUsers().catch(() => []),
     fetchLiveGames().catch(() => [])
@@ -482,15 +479,7 @@ async function init() {
 
   allUsers = users;
 
-  // Now populate the pickers with real user data
-  if (type === "tawle") {
-    buildTawlePickers();
-  } else {
-    buildPlayerPickers();
-    buildGuestSlotButtons();
-  }
-
-  // Check if there's an active game to rejoin
+  // Check if there's an active game to rejoin FIRST
   const myGames = liveGames.filter(g =>
     g.type === type &&
     Array.isArray(g.players) &&
@@ -498,11 +487,30 @@ async function init() {
   );
 
   if (myGames.length > 0) {
-    // Show join panel ON TOP of setup (setup stays as fallback)
+    // Show join panel — don't show setup at all
     showJoinPanel(myGames, type);
     document.getElementById("startNewBtn")?.addEventListener("click", () => {
       document.getElementById("joinPanel").style.display = "none";
+      // Only now show setup + build pickers
+      if (type === "tawle") {
+        showTawleSetup();
+        buildTawlePickers();
+      } else {
+        showSetup();
+        buildPlayerPickers();
+        buildGuestSlotButtons();
+      }
     });
+  } else {
+    // No live game — show setup immediately with pickers populated
+    if (type === "tawle") {
+      showTawleSetup();
+      buildTawlePickers();
+    } else {
+      showSetup();
+      buildPlayerPickers();
+      buildGuestSlotButtons();
+    }
   }
 }
 
