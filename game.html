@@ -898,10 +898,19 @@ function buildRoundInputs() {
       // ── Likha card picker — built ONCE, never rebuilt ──
       row.classList.remove("cols-4");
       row.style.gridTemplateColumns = "";
-      // Always rebuild the picker fresh (pure DOM, no innerHTML)
-      row.innerHTML = "";
-      row.style.cssText = "display:block;width:100%;";
-      buildLikhaPicker(names, row);
+      // Place Likha picker in scoringPanel directly, not inside roundInputRow
+      // This avoids score-input-row grid constraints
+      row.style.display = "none"; // hide the constrained row
+      let likhaContainer = document.getElementById("likhaPickerContainer");
+      if (!likhaContainer) {
+        likhaContainer = document.createElement("div");
+        likhaContainer.id = "likhaPickerContainer";
+        likhaContainer.style.cssText = "width:100%;margin-top:12px;";
+        // Insert after roundInputRow
+        row.parentNode.insertBefore(likhaContainer, row.nextSibling);
+      }
+      likhaContainer.innerHTML = "";
+      buildLikhaPicker(names, likhaContainer);
     } else {
       row.classList.add("cols-4");
       names.forEach((name,i) => {
