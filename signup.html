@@ -15,53 +15,73 @@
   margin-top: 18px;
 }
 .auth-links a {
-  font-size: .83rem;
-  opacity: .65;
-  text-decoration: none;
-  color: inherit;
+  font-size: .83rem; opacity: .6;
+  text-decoration: none; color: inherit;
   transition: opacity .15s;
 }
 .auth-links a:hover { opacity: 1; }
 
-/* Divider */
+/* ── Social buttons grid ── */
+.social-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 10px;
+  padding: 11px 12px;
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.04);
+  color: inherit;
+  transition: background .15s, border-color .15s;
+  white-space: nowrap;
+}
+.social-btn:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.25); }
+.social-btn.coming-soon {
+  opacity: .38;
+  cursor: not-allowed;
+  position: relative;
+}
+.social-btn.coming-soon::after {
+  content: "soon";
+  position: absolute;
+  top: -7px; right: -4px;
+  background: var(--gold);
+  color: #1a1612;
+  font-size: .55rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  padding: 1px 5px;
+  border-radius: 8px;
+  text-transform: uppercase;
+}
+
+/* ── Divider ── */
 .or-divider {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 18px 0;
-  opacity: .45;
-  font-size: .78rem;
+  margin: 16px 0;
+  opacity: .4;
+  font-size: .75rem;
   text-transform: uppercase;
-  letter-spacing: .06em;
+  letter-spacing: .07em;
 }
 .or-divider::before, .or-divider::after {
-  content: "";
-  flex: 1;
+  content: ""; flex: 1;
   border-top: 1px solid var(--line);
 }
 
-/* Google button */
-.google-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  background: #fff;
-  color: #3c4043;
-  border: 1px solid #dadce0;
-  border-radius: 10px;
-  padding: 12px 16px;
-  font-size: .92rem;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: 'Inter', sans-serif;
-  transition: box-shadow .15s, background .15s;
-}
-.google-btn:hover { background: #f8f9fa; box-shadow: 0 1px 6px rgba(0,0,0,.15); }
-.google-btn svg { flex-shrink: 0; }
-
-/* Google pre-fill panel */
+/* ── Google pre-fill card ── */
 .google-prefill {
   display: flex;
   align-items: center;
@@ -73,28 +93,19 @@
   margin-bottom: 16px;
 }
 .google-prefill img {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
+  width: 44px; height: 44px;
+  border-radius: 50%; object-fit: cover; flex-shrink: 0;
 }
 .google-prefill .gp-info { flex: 1; min-width: 0; }
 .google-prefill .gp-name { font-weight: 600; font-size: .9rem; }
 .google-prefill .gp-email { font-size: .75rem; opacity: .55; margin-top: 2px; }
 .google-prefill .gp-change {
-  font-size: .72rem;
-  opacity: .5;
-  cursor: pointer;
-  text-decoration: underline;
-  background: none;
-  border: none;
-  color: inherit;
-  padding: 0;
-  flex-shrink: 0;
+  font-size: .72rem; opacity: .5; cursor: pointer;
+  text-decoration: underline; background: none;
+  border: none; color: inherit; padding: 0; flex-shrink: 0;
 }
 
-/* Success */
+/* ── Success ── */
 .success-box { text-align: center; padding: 10px 0; }
 .success-box .sb-icon { font-size: 2.5rem; margin-bottom: 10px; }
 .success-box h3 { margin: 0 0 8px; font-family: 'Fraunces', serif; }
@@ -123,21 +134,51 @@
     <p class="eyebrow">New account</p>
     <h2 style="margin-top:0;">Sign up</h2>
 
-    <!-- Google sign-in button (shown when no Google session) -->
-    <div id="googleBtnWrap">
-      <button class="google-btn" id="googleBtn" onclick="triggerGoogleSignIn()">
-        <svg width="18" height="18" viewBox="0 0 18 18">
+    <!-- Social buttons -->
+    <div class="social-grid">
+      <!-- Google — active -->
+      <button class="social-btn" onclick="triggerGoogleSignIn()">
+        <svg width="17" height="17" viewBox="0 0 18 18">
           <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/>
           <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/>
           <path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/>
           <path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.31z"/>
         </svg>
-        Sign up with Google
+        Google
       </button>
-      <div class="or-divider">or</div>
+
+      <!-- Facebook — coming soon -->
+      <button class="social-btn coming-soon" disabled>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="#1877F2">
+          <path d="M24 12.073C24 5.404 18.627 0 12 0S0 5.404 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.268h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
+        </svg>
+        Facebook
+      </button>
+
+      <!-- Outlook — coming soon -->
+      <button class="social-btn coming-soon" disabled>
+        <svg width="17" height="17" viewBox="0 0 24 24">
+          <path fill="#0072C6" d="M24 7.387v13.226A1.39 1.39 0 0 1 22.611 22H7.389A1.39 1.39 0 0 1 6 20.613V18l9-2.25L24 18V7.387z"/>
+          <path fill="#0072C6" d="M24 7.387L15 9.75 6 7.387V5.388A1.39 1.39 0 0 1 7.389 4h15.222A1.39 1.39 0 0 1 24 5.388v2z" opacity=".7"/>
+          <path fill="#28A8E0" d="M15 9.75l9-2.363V18l-9-2.25V9.75z" opacity=".5"/>
+          <rect fill="#0078D4" x="0" y="5" width="13" height="14" rx="1.5"/>
+          <path fill="#fff" d="M6.5 8.5a3 3 0 1 0 0 7 3 3 0 0 0 0-7zm0 5a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/>
+        </svg>
+        Outlook
+      </button>
+
+      <!-- Apple — coming soon -->
+      <button class="social-btn coming-soon" disabled>
+        <svg width="15" height="17" viewBox="0 0 814 1000" fill="currentColor">
+          <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-42.3-150.3-119.8c-52.4-91.3-95.2-234.5-95.2-371.3 0-223.1 145.5-341.2 289-341.2 73.7 0 134.8 48.4 180.5 48.4 43.7 0 112.4-51.9 197.5-51.9zm-166.6-19.4c-7.7 36.4-39 65.4-72.7 65.4-5.4 0-10.8-.7-16.1-2.2C540 356 570 316 570 276c0-5.1.7-10.2 2.2-15.3C607 270.4 634 299.3 621.5 321.5z"/>
+        </svg>
+        Apple
+      </button>
     </div>
 
-    <!-- Google pre-fill card (shown after Google sign-in) -->
+    <div class="or-divider">or sign up with email</div>
+
+    <!-- Google pre-fill card -->
     <div class="google-prefill" id="googlePrefill" style="display:none;">
       <img id="googleAvatar" src="" alt="">
       <div class="gp-info">
@@ -147,7 +188,7 @@
       <button class="gp-change" onclick="resetGoogleSignIn()">Change</button>
     </div>
 
-    <!-- Name fields (hidden when Google is used) -->
+    <!-- Manual name (hidden when Google used) -->
     <div id="manualNameFields">
       <label for="firstName">First name</label>
       <input type="text" id="firstName" autocomplete="given-name" placeholder="Elie">
@@ -162,7 +203,7 @@
     <label for="phone" style="margin-top:10px;">Phone number</label>
     <input type="text" id="phone" autocomplete="tel" placeholder="+961 XX XXX XXX">
 
-    <!-- Password fields (hidden when Google is used) -->
+    <!-- Manual password (hidden when Google used) -->
     <div id="passwordFields">
       <label for="password" style="margin-top:10px;">Password</label>
       <input type="password" id="password" autocomplete="new-password" placeholder="••••••••">
@@ -183,23 +224,17 @@
     <div class="success-box">
       <div class="sb-icon">🎉</div>
       <h3>Account created!</h3>
-      <p>
-        Your account is pending approval by the admin.<br>
-        Tap the button below to message them on WhatsApp —
-        once approved you'll be able to sign in.
-      </p>
+      <p>Your account is pending approval by the admin.<br>
+        Tap below to message them on WhatsApp — once approved you can sign in.</p>
       <a id="waLink" href="#" target="_blank" rel="noopener" class="wa-btn">
         💬 Message admin on WhatsApp
       </a>
       <br><br>
-      <a href="index.html" style="font-size:.82rem;opacity:.6;color:inherit;text-decoration:none;">
-        ← Back to sign in
-      </a>
+      <a href="index.html" style="font-size:.82rem;opacity:.6;color:inherit;text-decoration:none;">← Back to sign in</a>
     </div>
   </div>
 </div>
 
-<!-- Google Identity Services -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="common.js"></script>
 <script>
@@ -215,42 +250,33 @@ async function hashPassword(password) {
 const ADMIN_WA      = "+96170234138";
 const GOOGLE_CLIENT = "719090679294-4ihaptgq611pqusbl5u95uiu03cabtub.apps.googleusercontent.com";
 
-// Google sign-in state
-let googleUser = null; // { firstName, lastName, email, photo, sub }
+let googleUser = null;
 
-// ── Lowercase username as user types ──
 document.getElementById("username").addEventListener("input", e => {
   const el = e.target, pos = el.selectionStart;
   el.value = el.value.toLowerCase();
   el.setSelectionRange(pos, pos);
 });
 
-// ── Google sign-in trigger ──
 function triggerGoogleSignIn() {
   if (typeof google === "undefined") {
-    document.getElementById("signupError").textContent = "Google sign-in failed to load. Please try the manual form below.";
+    document.getElementById("signupError").textContent = "Google sign-in failed to load. Use the manual form below.";
     return;
   }
   google.accounts.id.initialize({
-    client_id: GOOGLE_CLIENT,
-    callback:  handleGoogleCredential,
-    auto_select: false,
-    cancel_on_tap_outside: true
+    client_id: GOOGLE_CLIENT, callback: handleGoogleCredential,
+    auto_select: false, cancel_on_tap_outside: true
   });
-  google.accounts.id.prompt((notification) => {
-    // If one-tap is suppressed, fall back to popup
-    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-      google.accounts.id.renderButton(
-        document.getElementById("googleBtn"),
-        { theme:"outline", size:"large", width:360 }
-      );
+  google.accounts.id.prompt((n) => {
+    if (n.isNotDisplayed() || n.isSkippedMoment()) {
+      const wrap = document.createElement("div");
+      document.getElementById("formPanel").prepend(wrap);
+      google.accounts.id.renderButton(wrap, { theme:"outline", size:"large", width:360 });
     }
   });
 }
 
-// ── Handle Google credential response ──
 function handleGoogleCredential(response) {
-  // Decode the JWT payload (no verification needed client-side — server-side not needed here since we just pre-fill)
   const payload = JSON.parse(atob(response.credential.split(".")[1]));
   googleUser = {
     firstName: payload.given_name  || "",
@@ -259,18 +285,13 @@ function handleGoogleCredential(response) {
     photo:     payload.picture     || "",
     sub:       payload.sub         || ""
   };
-
-  // Pre-fill and hide manual name + password fields
   document.getElementById("googlePrefill").style.display    = "";
-  document.getElementById("googleBtnWrap").style.display    = "none";
+  document.getElementById("googleBtnWrap") && (document.getElementById("googleBtnWrap").style.display = "none");
   document.getElementById("manualNameFields").style.display = "none";
   document.getElementById("passwordFields").style.display   = "none";
-
-  document.getElementById("googleAvatar").src      = googleUser.photo;
-  document.getElementById("googleDisplayName").textContent = `${googleUser.firstName} ${googleUser.lastName}`;
-  document.getElementById("googleEmail").textContent       = googleUser.email;
-
-  // Pre-fill username from first name (lowercased, letters only)
+  document.getElementById("googleAvatar").src               = googleUser.photo;
+  document.getElementById("googleDisplayName").textContent  = `${googleUser.firstName} ${googleUser.lastName}`;
+  document.getElementById("googleEmail").textContent        = googleUser.email;
   const suggested = googleUser.firstName.toLowerCase().replace(/[^a-z0-9_]/g, "");
   document.getElementById("username").value = suggested;
   document.getElementById("username").focus();
@@ -279,102 +300,61 @@ function handleGoogleCredential(response) {
 function resetGoogleSignIn() {
   googleUser = null;
   document.getElementById("googlePrefill").style.display    = "none";
-  document.getElementById("googleBtnWrap").style.display    = "";
   document.getElementById("manualNameFields").style.display = "";
   document.getElementById("passwordFields").style.display   = "";
-  document.getElementById("googleAvatar").src               = "";
-  document.getElementById("googleDisplayName").textContent  = "";
-  document.getElementById("googleEmail").textContent        = "";
 }
 
-// ── Sign up ──
 document.getElementById("signupBtn").addEventListener("click", signUp);
-["firstName","lastName","username","phone","password","confirm"].forEach(id => {
-  document.getElementById(id).addEventListener("keydown", e => {
-    if (e.key === "Enter") signUp();
-  });
-});
 
 async function signUp() {
-  const errEl = document.getElementById("signupError");
+  const errEl    = document.getElementById("signupError");
   errEl.textContent = "";
+  const username  = document.getElementById("username").value.trim().toLowerCase();
+  const phone     = document.getElementById("phone").value.trim();
+  const firstName = googleUser ? googleUser.firstName : document.getElementById("firstName").value.trim();
+  const lastName  = googleUser ? googleUser.lastName  : document.getElementById("lastName").value.trim();
 
-  const username = document.getElementById("username").value.trim().toLowerCase();
-  const phone    = document.getElementById("phone").value.trim();
-
-  // Get name from Google or manual fields
-  const firstName = googleUser
-    ? googleUser.firstName
-    : document.getElementById("firstName").value.trim();
-  const lastName = googleUser
-    ? googleUser.lastName
-    : document.getElementById("lastName").value.trim();
-
-  // Get password — Google users get a random secure hash (they log in via Google)
   let passwordHash;
   if (googleUser) {
-    // Use Google sub as the password base — unique, user can't guess it
-    // They'll always sign in via Google, never need to type this
     passwordHash = await hashPassword("google_" + googleUser.sub);
   } else {
     const password = document.getElementById("password").value;
     const confirm  = document.getElementById("confirm").value;
+    if (!firstName || !lastName) { errEl.textContent = "First and last name are required."; return; }
     if (!password) { errEl.textContent = "Enter a password."; return; }
     if (password.length < 4) { errEl.textContent = "Password must be at least 4 characters."; return; }
     if (password !== confirm) { errEl.textContent = "Passwords don't match."; return; }
     passwordHash = await hashPassword(password);
   }
 
-  // Validation
-  if (!firstName || !lastName) { errEl.textContent = "First and last name are required."; return; }
   if (!username) { errEl.textContent = "Choose a username."; return; }
   if (username.length < 3) { errEl.textContent = "Username must be at least 3 characters."; return; }
-  if (!/^[a-z0-9_]+$/.test(username)) {
-    errEl.textContent = "Username can only contain letters, numbers, and underscores."; return;
-  }
+  if (!/^[a-z0-9_]+$/.test(username)) { errEl.textContent = "Username: letters, numbers, underscores only."; return; }
 
   const btn = document.getElementById("signupBtn");
-  btn.disabled = true;
-  btn.textContent = "Creating account…";
+  btn.disabled = true; btn.textContent = "Creating account…";
 
   try {
     const res = await fetch(SHEET_API_URL, {
-      method:  "POST",
+      method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body:    JSON.stringify({
-        action: "signUp",
-        username,
-        firstName,
-        lastName,
-        phone,
+      body: JSON.stringify({
+        action: "signUp", username, firstName, lastName, phone,
         password: passwordHash,
-        image:    googleUser ? googleUser.photo : "",
+        image: googleUser ? googleUser.photo : "",
         googleSignIn: !!googleUser
       })
     });
     const data = await res.json();
+    if (data.error) { errEl.textContent = data.error; btn.disabled = false; btn.textContent = "Create account"; return; }
 
-    if (data.error) {
-      errEl.textContent = data.error;
-      btn.disabled = false;
-      btn.textContent = "Create account";
-      return;
-    }
-
-    // Success
-    const msg = encodeURIComponent(
-      `Hi, I just signed up for Card Table with username "${username}" (${firstName} ${lastName}). Please approve my account!`
-    );
-    document.getElementById("waLink").href =
-      `https://wa.me/${ADMIN_WA.replace(/\D/g,"")}?text=${msg}`;
-
+    const msg = encodeURIComponent(`Hi, I just signed up for Card Table with username "${username}" (${firstName} ${lastName}). Please approve my account!`);
+    document.getElementById("waLink").href = `https://wa.me/${ADMIN_WA.replace(/\D/g,"")}?text=${msg}`;
     document.getElementById("formPanel").style.display    = "none";
     document.getElementById("successPanel").style.display = "";
-
   } catch(e) {
     errEl.textContent = "Could not connect. " + e.message;
-    btn.disabled = false;
-    btn.textContent = "Create account";
+    btn.disabled = false; btn.textContent = "Create account";
   }
 }
 </script>
