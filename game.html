@@ -131,105 +131,109 @@
 /* ── Likha card picker ── */
 .likha-picker { width: 100%; }
 
-/* Mode tabs */
+/* Mode tabs — single row, no wrapping */
 .likha-tabs {
   display: flex;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
+  height: 36px;
 }
 .likha-tab {
-  flex: 1; padding: 9px 8px;
-  font-size: .8rem; font-weight: 600;
+  flex: 1; padding: 0 8px;
+  font-size: .78rem; font-weight: 600; white-space: nowrap;
   cursor: pointer; font-family: 'Inter', sans-serif;
   border: none; background: transparent; color: inherit;
   opacity: .5; transition: all .15s; text-align: center;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
 }
 .likha-tab:first-child { border-right: 1px solid var(--line); }
 .likha-tab.active { background: var(--gold); color: #1a1612; opacity: 1; }
 
 /* Player rows */
 .likha-player-row {
-  padding: 12px 0;
+  padding: 10px 0;
   border-bottom: 1px solid rgba(255,255,255,.07);
 }
 .likha-player-row:last-of-type { border-bottom: none; }
 .likha-player-name {
-  font-size: .8rem; font-weight: 700;
-  margin-bottom: 8px; opacity: .8;
+  font-size: .78rem; font-weight: 700;
+  margin-bottom: 7px; opacity: .75;
 }
 .likha-controls {
-  display: grid;
-  grid-template-columns: 1fr auto auto auto;
+  display: flex;
   gap: 8px;
-  align-items: center;
+  align-items: stretch;
+  height: 46px;
 }
 
-/* Hearts stepper — takes remaining space */
+/* Hearts stepper — flex: 1 to fill remaining space */
 .hearts-stepper {
+  flex: 1;
   display: flex;
   align-items: center;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
   background: rgba(0,0,0,.2);
-  height: 44px;
+  min-width: 0;
 }
 .hearts-stepper button {
   background: none; border: none; color: inherit;
-  font-size: 1.2rem; width: 44px; height: 44px;
+  font-size: 1.3rem; width: 40px; height: 100%;
   cursor: pointer; font-weight: 700;
   transition: background .1s; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
 }
 .hearts-stepper button:active { background: rgba(255,255,255,.15); }
 .hearts-stepper .hs-inner {
   flex: 1; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 1px;
+  min-width: 0;
 }
 .hearts-stepper .hs-val {
-  font-size: 1.1rem; font-family: 'DM Mono', monospace; font-weight: 700; line-height: 1;
+  font-size: 1.15rem; font-family: 'DM Mono', monospace; font-weight: 700; line-height: 1;
 }
 .hearts-stepper .hs-label {
-  font-size: .58rem; opacity: .45; text-transform: uppercase; letter-spacing: .05em;
+  font-size: .58rem; opacity: .4; letter-spacing: .03em;
 }
 
 /* Q♠ and 10♦ toggles */
 .card-toggle {
   display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 2px;
-  width: 52px; height: 44px;
-  border: 1px solid var(--line); border-radius: 10px;
+  align-items: center; justify-content: center; gap: 1px;
+  width: 50px; flex-shrink: 0;
+  border: 1px solid var(--line); border-radius: 8px;
   background: rgba(0,0,0,.2);
   cursor: pointer; transition: all .15s; user-select: none;
-  flex-shrink: 0;
 }
-.card-toggle .ct-card { font-size: .88rem; font-weight: 700; line-height: 1; }
-.card-toggle .ct-pts  { font-size: .55rem; opacity: .45; }
-.card-toggle.active   { background: rgba(212,175,55,.18); border-color: var(--gold); }
-.card-toggle.active .ct-pts { opacity: .7; color: var(--gold); }
+.card-toggle .ct-card { font-size: .85rem; font-weight: 700; line-height: 1; }
+.card-toggle .ct-pts  { font-size: .55rem; opacity: .4; }
+.card-toggle.active   { background: rgba(212,175,55,.15); border-color: var(--gold); }
+.card-toggle.active .ct-pts { opacity: .65; color: var(--gold); }
 
-/* Score pill */
+/* Score — plain text, no border */
 .player-score-pill {
   display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 1px;
-  width: 44px; height: 44px;
-  border: 1px solid rgba(212,175,55,.3); border-radius: 10px;
-  background: rgba(212,175,55,.06); flex-shrink: 0;
+  width: 40px; flex-shrink: 0;
+  border-radius: 8px;
+  background: rgba(212,175,55,.07);
 }
-.player-score-pill .sp-val  { font-size: 1rem; font-family: 'DM Mono',monospace; font-weight: 700; line-height: 1; }
-.player-score-pill .sp-label { font-size: .55rem; opacity: .45; }
+.player-score-pill .sp-val   { font-size: 1.05rem; font-family: 'DM Mono',monospace; font-weight: 700; line-height: 1; color: var(--gold); }
+.player-score-pill .sp-label { font-size: .55rem; opacity: .4; }
 
 /* Total bar */
 .likha-total-bar {
   display: flex; align-items: center; justify-content: space-between;
-  margin-top: 14px; padding: 10px 14px;
-  border-radius: 10px; background: rgba(0,0,0,.2); font-size: .82rem;
+  margin-top: 12px; padding: 9px 12px;
+  border-radius: 8px; background: rgba(0,0,0,.2); font-size: .82rem;
 }
 .lt-sum { font-family: 'DM Mono',monospace; font-weight: 700; font-size: 1rem; }
 .lt-ok  { color: #6fae8d; font-weight: 700; }
 .lt-bad { color: #b1473e; font-weight: 700; }
-.lt-pending { opacity: .5; }
+.lt-pending { opacity: .45; }
 
 </style>
 </head>
@@ -901,44 +905,58 @@ function buildRoundInputs() {
 let likhaMode = "cards"; // "cards" | "manual"
 
 function buildLikhaPickerHTML(names) {
+  const cardActive   = likhaMode === "cards" ? "active" : "";
+  const manualActive = likhaMode === "manual" ? "active" : "";
+  const cardHide     = likhaMode === "manual" ? "display:none" : "";
+  const manualHide   = likhaMode === "cards"  ? "display:none" : "";
+
+  let playerRows = "";
+  names.forEach((name, i) => {
+    const firstName = name.split(" ")[0];
+    playerRows += `
+      <div class="likha-player-row">
+        <div class="likha-player-name">${firstName}</div>
+        <div class="likha-controls">
+          <div class="hearts-stepper">
+            <button type="button" onclick="stepHeart(${i},-1)">−</button>
+            <div class="hs-inner">
+              <span class="hs-val" id="hearts-val-${i}">0</span>
+              <span class="hs-label">♥ hearts</span>
+            </div>
+            <button type="button" onclick="stepHeart(${i},+1)">+</button>
+          </div>
+          <div class="card-toggle" id="queen-${i}" onclick="toggleQueen(${i})">
+            <span class="ct-card">Q♠</span>
+            <span class="ct-pts">+13</span>
+          </div>
+          <div class="card-toggle" id="diamond-${i}" onclick="toggleDiamond(${i})">
+            <span class="ct-card">10♦</span>
+            <span class="ct-pts">+10</span>
+          </div>
+          <div class="player-score-pill">
+            <span class="sp-val" id="pscore-${i}">0</span>
+            <span class="sp-label">pts</span>
+          </div>
+        </div>
+      </div>`;
+  });
+
+  let manualInputs = "";
+  names.forEach((name, i) => {
+    manualInputs += `
+      <div class="field">
+        <label>${name.split(" ")[0]}</label>
+        <input type="number" id="round-p${i}" inputmode="numeric" placeholder="0" min="0">
+      </div>`;
+  });
+
   return `
     <div class="likha-tabs">
-      <button class="likha-tab ${likhaMode==="cards"?"active":""}" onclick="setLikhaMode('cards')">🃏 Card picker</button>
-      <button class="likha-tab ${likhaMode==="manual"?"active":""}" onclick="setLikhaMode('manual')">✏️ Manual</button>
+      <button class="likha-tab ${cardActive}" onclick="setLikhaMode('cards')">🃏 Card picker</button>
+      <button class="likha-tab ${manualActive}" onclick="setLikhaMode('manual')">✏️ Manual</button>
     </div>
-
-    <div id="likhaCardMode" style="${likhaMode==="manual"?"display:none":""}">
-      ${names.map((name,i) => `
-        <div class="likha-player-row">
-          <div class="likha-player-name">${name.split(" ")[0]}</div>
-          <div class="likha-controls">
-            <!-- Hearts stepper -->
-            <div class="hearts-stepper">
-              <button onclick="stepHeart(${i},-1)">−</button>
-              <div class="hs-inner">
-                <span class="hs-val" id="hearts-val-${i}">0</span>
-                <span class="hs-label">♥ hearts</span>
-              </div>
-              <button onclick="stepHeart(${i},+1)">+</button>
-            </div>
-            <!-- Q♠ toggle -->
-            <div class="card-toggle" id="queen-${i}" onclick="toggleQueen(${i})">
-              <span class="ct-card">Q♠</span>
-              <span class="ct-pts">+13</span>
-            </div>
-            <!-- 10♦ toggle -->
-            <div class="card-toggle" id="diamond-${i}" onclick="toggleDiamond(${i})">
-              <span class="ct-card">10♦</span>
-              <span class="ct-pts">+10</span>
-            </div>
-            <!-- Score pill -->
-            <div class="player-score-pill">
-              <span class="sp-val" id="pscore-${i}">0</span>
-              <span class="sp-label">pts</span>
-            </div>
-          </div>
-        </div>`).join("")}
-
+    <div id="likhaCardMode" style="${cardHide}">
+      ${playerRows}
       <div class="likha-total-bar">
         <span>Round total</span>
         <span>
@@ -948,14 +966,9 @@ function buildLikhaPickerHTML(names) {
         </span>
       </div>
     </div>
-
-    <div id="likhaManualMode" style="${likhaMode==="cards"?"display:none":""}">
+    <div id="likhaManualMode" style="${manualHide}">
       <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px;">
-        ${names.map((name,i) => `
-          <div class="field">
-            <label>${name.split(" ")[0]}</label>
-            <input type="number" id="round-p${i}" inputmode="numeric" placeholder="0" min="0">
-          </div>`).join("")}
+        ${manualInputs}
       </div>
     </div>`;
 }
