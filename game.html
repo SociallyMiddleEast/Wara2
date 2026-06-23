@@ -281,43 +281,55 @@ async function init() {
     return;
   }
 
-  // Load users
-  try { allUsers = await fetchUsers(); } catch(e) { allUsers = []; }
+  // Set title immediately — don't wait for network
+  if (type === "tawle") {
+    document.getElementById("gameTitle").textContent = "Tawle";
+  } else {
+    document.getElementById("gameTitle").textContent = RULES[type].label;
+  }
 
-  // Check for active live games the current user is part of
-  const liveGames = await fetchLiveGames();
-  const myGames   = liveGames.filter(g =>
+  // Wire up button listeners immediately
+  document.getElementById("startBtn").addEventListener("click", startGame);
+  document.getElementById("addRoundBtn").addEventListener("click", addRound);
+
+  // Show setup UI right away with a loading spinner in the pickers
+  if (type === "tawle") {
+    document.getElementById("setupPanel").style.display = "none";
+    showTawleSetup();
+  } else {
+    showSetup();
+  }
+
+  // Load users + live games IN PARALLEL in the background
+  const [users, liveGames] = await Promise.all([
+    fetchUsers().catch(() => []),
+    fetchLiveGames().catch(() => [])
+  ]);
+
+  allUsers = users;
+
+  // Now populate the pickers with real user data
+  if (type === "tawle") {
+    buildTawlePickers();
+  } else {
+    buildPlayerPickers();
+    buildGuestSlotButtons();
+  }
+
+  // Check if there's an active game to rejoin
+  const myGames = liveGames.filter(g =>
     g.type === type &&
     Array.isArray(g.players) &&
     g.players.some(p => namesMatch(p, session.firstName, session.lastName))
   );
 
-  if (type === "tawle") {
-    document.getElementById("gameTitle").textContent = "Tawle";
-    document.getElementById("setupPanel").style.display = "none";
-    if (myGames.length > 0) {
-      showJoinPanel(myGames, "tawle");
-    } else {
-      showTawleSetup();
-    }
-    return;
-  }
-
-  const r = RULES[type];
-  document.getElementById("gameTitle").textContent = r.label;
-
   if (myGames.length > 0) {
+    // Show join panel ON TOP of setup (setup stays as fallback)
     showJoinPanel(myGames, type);
-  } else {
-    showSetup();
+    document.getElementById("startNewBtn")?.addEventListener("click", () => {
+      document.getElementById("joinPanel").style.display = "none";
+    });
   }
-
-  document.getElementById("startBtn").addEventListener("click", startGame);
-  document.getElementById("addRoundBtn").addEventListener("click", addRound);
-  document.getElementById("startNewBtn")?.addEventListener("click", () => {
-    document.getElementById("joinPanel").style.display = "none";
-    showSetup();
-  });
 }
 
 // ─────────────────────────────────────────────
@@ -386,13 +398,12 @@ function showSetup() {
   document.getElementById("setupPanel").style.display = "";
   document.getElementById("setupEyebrow").textContent = RULES[type].label + " setup";
   document.getElementById("scoringEyebrow").textContent = buildEyebrow();
-  buildPlayerPickers();
-  buildGuestSlotButtons();
+  // Pickers built after data loads in init()
 }
 
 function showTawleSetup() {
   document.getElementById("tawleSetupPanel").style.display = "";
-  buildTawlePickers();
+  // Pickers built after data loads in init()
   document.getElementById("tawleStartBtn").addEventListener("click", startTawle);
 }
 
