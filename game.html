@@ -129,142 +129,107 @@
 #scoreFab:active { transform:scale(.96); }
 
 /* ── Likha card picker ── */
-.likha-picker {
-  width: 100%;
-}
-.likha-mode-toggle {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-.likha-mode-btn {
-  flex: 1;
-  padding: 7px 10px;
-  border-radius: 8px;
-  font-size: .75rem;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: 'Inter', sans-serif;
-  border: 1px solid var(--line);
-  background: transparent;
-  color: inherit;
-  opacity: .55;
-  transition: all .15s;
-}
-.likha-mode-btn.active {
-  background: var(--gold);
-  color: #1a1612;
-  border-color: var(--gold);
-  opacity: 1;
-}
+.likha-picker { width: 100%; }
 
-/* Player card rows */
+/* Mode tabs */
+.likha-tabs {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.likha-tab {
+  flex: 1; padding: 9px 8px;
+  font-size: .8rem; font-weight: 600;
+  cursor: pointer; font-family: 'Inter', sans-serif;
+  border: none; background: transparent; color: inherit;
+  opacity: .5; transition: all .15s; text-align: center;
+}
+.likha-tab:first-child { border-right: 1px solid var(--line); }
+.likha-tab.active { background: var(--gold); color: #1a1612; opacity: 1; }
+
+/* Player rows */
 .likha-player-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(255,255,255,.06);
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,.07);
 }
-.likha-player-row:last-child { border-bottom: none; }
+.likha-player-row:last-of-type { border-bottom: none; }
 .likha-player-name {
-  font-size: .78rem;
-  font-weight: 600;
-  width: 68px;
-  flex-shrink: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: .8rem; font-weight: 700;
+  margin-bottom: 8px; opacity: .8;
 }
-.likha-cards {
-  display: flex;
-  gap: 6px;
-  flex: 1;
+.likha-controls {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 8px;
+  align-items: center;
 }
 
-/* Card chip */
-.card-chip {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-.card-chip-label {
-  font-size: .6rem;
-  opacity: .5;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-}
-
-/* Stepper */
-.card-stepper {
+/* Hearts stepper — takes remaining space */
+.hearts-stepper {
   display: flex;
   align-items: center;
-  gap: 0;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
   background: rgba(0,0,0,.2);
+  height: 44px;
 }
-.card-stepper button {
-  background: none;
-  border: none;
-  color: inherit;
-  font-size: 1rem;
-  width: 30px;
-  height: 34px;
-  cursor: pointer;
-  font-weight: 700;
-  transition: background .1s;
-  flex-shrink: 0;
+.hearts-stepper button {
+  background: none; border: none; color: inherit;
+  font-size: 1.2rem; width: 44px; height: 44px;
+  cursor: pointer; font-weight: 700;
+  transition: background .1s; flex-shrink: 0;
 }
-.card-stepper button:hover { background: rgba(255,255,255,.08); }
-.card-stepper button:active { background: rgba(255,255,255,.15); }
-.card-stepper .cs-val {
-  font-size: .82rem;
-  font-family: 'DM Mono', monospace;
-  font-weight: 600;
-  min-width: 28px;
-  text-align: center;
+.hearts-stepper button:active { background: rgba(255,255,255,.15); }
+.hearts-stepper .hs-inner {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 1px;
+}
+.hearts-stepper .hs-val {
+  font-size: 1.1rem; font-family: 'DM Mono', monospace; font-weight: 700; line-height: 1;
+}
+.hearts-stepper .hs-label {
+  font-size: .58rem; opacity: .45; text-transform: uppercase; letter-spacing: .05em;
 }
 
-/* Special card toggles */
+/* Q♠ and 10♦ toggles */
 .card-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 34px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 2px;
+  width: 52px; height: 44px;
+  border: 1px solid var(--line); border-radius: 10px;
   background: rgba(0,0,0,.2);
-  cursor: pointer;
-  font-size: .85rem;
-  transition: all .15s;
-  user-select: none;
+  cursor: pointer; transition: all .15s; user-select: none;
   flex-shrink: 0;
 }
-.card-toggle.active {
-  background: rgba(212,175,55,.15);
-  border-color: var(--gold);
-}
-.card-toggle:hover { background: rgba(255,255,255,.08); }
-.card-toggle.active:hover { background: rgba(212,175,55,.22); }
+.card-toggle .ct-card { font-size: .88rem; font-weight: 700; line-height: 1; }
+.card-toggle .ct-pts  { font-size: .55rem; opacity: .45; }
+.card-toggle.active   { background: rgba(212,175,55,.18); border-color: var(--gold); }
+.card-toggle.active .ct-pts { opacity: .7; color: var(--gold); }
 
-/* Round total indicator */
-.likha-total-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 12px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: rgba(0,0,0,.2);
-  font-size: .8rem;
+/* Score pill */
+.player-score-pill {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 1px;
+  width: 44px; height: 44px;
+  border: 1px solid rgba(212,175,55,.3); border-radius: 10px;
+  background: rgba(212,175,55,.06); flex-shrink: 0;
 }
-.likha-total-bar .lt-sum { font-family: 'DM Mono', monospace; font-weight: 700; }
-.likha-total-bar .lt-ok  { color: #6fae8d; font-weight: 600; }
-.likha-total-bar .lt-bad { color: #b1473e; font-weight: 600; }
+.player-score-pill .sp-val  { font-size: 1rem; font-family: 'DM Mono',monospace; font-weight: 700; line-height: 1; }
+.player-score-pill .sp-label { font-size: .55rem; opacity: .45; }
+
+/* Total bar */
+.likha-total-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 14px; padding: 10px 14px;
+  border-radius: 10px; background: rgba(0,0,0,.2); font-size: .82rem;
+}
+.lt-sum { font-family: 'DM Mono',monospace; font-weight: 700; font-size: 1rem; }
+.lt-ok  { color: #6fae8d; font-weight: 700; }
+.lt-bad { color: #b1473e; font-weight: 700; }
+.lt-pending { opacity: .5; }
 
 </style>
 </head>
@@ -586,8 +551,11 @@ async function joinGame(liveGame, watchOnly) {
   state.type    = type;
   state.players = liveGame.players || [];
 
-  document.getElementById("joinPanel").style.display   = "none";
-  document.getElementById("scoringPanel").style.display = "";
+  // Hide ALL panels that could be showing
+  document.getElementById("joinPanel").style.display      = "none";
+  document.getElementById("setupPanel").style.display     = "none";
+  document.getElementById("tawleSetupPanel").style.display = "none";
+  document.getElementById("scoringPanel").style.display   = "";
   document.getElementById("scoringEyebrow").textContent = buildEyebrow();
   document.getElementById("scoringHeading").textContent =
     `${state.players[0]}/${state.players[1]} vs ${state.players[2]}/${state.players[3]}`;
@@ -934,50 +902,55 @@ let likhaMode = "cards"; // "cards" | "manual"
 
 function buildLikhaPickerHTML(names) {
   return `
-    <div class="likha-mode-toggle">
-      <button class="likha-mode-btn ${likhaMode==="cards"?"active":""}" onclick="setLikhaMode('cards')">🃏 Card picker</button>
-      <button class="likha-mode-btn ${likhaMode==="manual"?"active":""}" onclick="setLikhaMode('manual')">✏️ Manual entry</button>
+    <div class="likha-tabs">
+      <button class="likha-tab ${likhaMode==="cards"?"active":""}" onclick="setLikhaMode('cards')">🃏 Card picker</button>
+      <button class="likha-tab ${likhaMode==="manual"?"active":""}" onclick="setLikhaMode('manual')">✏️ Manual</button>
     </div>
+
     <div id="likhaCardMode" style="${likhaMode==="manual"?"display:none":""}">
       ${names.map((name,i) => `
         <div class="likha-player-row">
           <div class="likha-player-name">${name.split(" ")[0]}</div>
-          <div class="likha-cards">
+          <div class="likha-controls">
             <!-- Hearts stepper -->
-            <div class="card-chip">
-              <span class="card-chip-label">♥ Hearts</span>
-              <div class="card-stepper">
-                <button onclick="stepHeart(${i},-1)">−</button>
-                <span class="cs-val" id="hearts-val-${i}">0</span>
-                <button onclick="stepHeart(${i},+1)">+</button>
+            <div class="hearts-stepper">
+              <button onclick="stepHeart(${i},-1)">−</button>
+              <div class="hs-inner">
+                <span class="hs-val" id="hearts-val-${i}">0</span>
+                <span class="hs-label">♥ hearts</span>
               </div>
+              <button onclick="stepHeart(${i},+1)">+</button>
             </div>
             <!-- Q♠ toggle -->
-            <div class="card-chip">
-              <span class="card-chip-label">Q♠ +13</span>
-              <div class="card-toggle" id="queen-${i}" onclick="toggleQueen(${i})">Q♠</div>
+            <div class="card-toggle" id="queen-${i}" onclick="toggleQueen(${i})">
+              <span class="ct-card">Q♠</span>
+              <span class="ct-pts">+13</span>
             </div>
             <!-- 10♦ toggle -->
-            <div class="card-chip">
-              <span class="card-chip-label">10♦ +10</span>
-              <div class="card-toggle" id="diamond-${i}" onclick="toggleDiamond(${i})">10♦</div>
+            <div class="card-toggle" id="diamond-${i}" onclick="toggleDiamond(${i})">
+              <span class="ct-card">10♦</span>
+              <span class="ct-pts">+10</span>
             </div>
-            <!-- Player total -->
-            <div class="card-chip">
-              <span class="card-chip-label">Score</span>
-              <div class="card-stepper" style="pointer-events:none; background:rgba(212,175,55,.08); border-color:rgba(212,175,55,.3);">
-                <span class="cs-val" id="pscore-${i}" style="min-width:40px; padding:0 8px;">0</span>
-              </div>
+            <!-- Score pill -->
+            <div class="player-score-pill">
+              <span class="sp-val" id="pscore-${i}">0</span>
+              <span class="sp-label">pts</span>
             </div>
           </div>
         </div>`).join("")}
+
       <div class="likha-total-bar">
         <span>Round total</span>
-        <span><span class="lt-sum" id="likhaTotalSum">0</span> / 36 <span id="likhaTotalStatus"></span></span>
+        <span>
+          <span class="lt-sum" id="likhaTotalSum">0</span>
+          <span style="opacity:.4"> / 36</span>
+          &nbsp;<span id="likhaTotalStatus" class="lt-pending">36 left</span>
+        </span>
       </div>
     </div>
+
     <div id="likhaManualMode" style="${likhaMode==="cards"?"display:none":""}">
-      <div class="cols-4" style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px;">
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px;">
         ${names.map((name,i) => `
           <div class="field">
             <label>${name.split(" ")[0]}</label>
@@ -1024,12 +997,12 @@ function updateLikhaUI() {
   for (let i=0;i<4;i++) {
     const score = likhaHearts[i] + (likhaQueens[i]?13:0) + (likhaDiamonds[i]?10:0);
     total += score;
-    const hv = document.getElementById(`hearts-val-${i}`);
-    const ps = document.getElementById(`pscore-${i}`);
+    const hv  = document.getElementById(`hearts-val-${i}`);
+    const ps  = document.getElementById(`pscore-${i}`);
     const qEl = document.getElementById(`queen-${i}`);
     const dEl = document.getElementById(`diamond-${i}`);
-    if (hv) hv.textContent = likhaHearts[i];
-    if (ps) ps.textContent = score;
+    if (hv)  hv.textContent  = likhaHearts[i];
+    if (ps)  ps.textContent  = score;
     if (qEl) qEl.classList.toggle("active", likhaQueens[i]);
     if (dEl) dEl.classList.toggle("active", likhaDiamonds[i]);
   }
@@ -1037,9 +1010,16 @@ function updateLikhaUI() {
   const statusEl = document.getElementById("likhaTotalStatus");
   if (sumEl) sumEl.textContent = total;
   if (statusEl) {
-    if (total === 36)      { statusEl.textContent = "✓"; statusEl.className = "lt-ok"; }
-    else if (total > 36)   { statusEl.textContent = "Too high"; statusEl.className = "lt-bad"; }
-    else                   { statusEl.textContent = `${36-total} left`; statusEl.className = ""; }
+    if (total === 36) {
+      statusEl.textContent = "✓ Ready";
+      statusEl.className   = "lt-ok";
+    } else if (total > 36) {
+      statusEl.textContent = `${total-36} over`;
+      statusEl.className   = "lt-bad";
+    } else {
+      statusEl.textContent = `${36-total} left`;
+      statusEl.className   = "lt-pending";
+    }
   }
 }
 
