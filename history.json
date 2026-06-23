@@ -8,6 +8,208 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="style.css">
+<style>
+/* ── Stats bar ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.stat-card {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 10px;
+  text-align: center;
+  background: rgba(0,0,0,.18);
+}
+.stat-card .st-label {
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  opacity: .55;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.stat-card .st-value {
+  font-size: 1.5rem;
+  font-family: 'Fraunces', serif;
+  font-weight: 700;
+  line-height: 1;
+}
+.stat-card .st-sub {
+  font-size: .68rem;
+  opacity: .5;
+  margin-top: 3px;
+}
+.stat-card.highlight { border-color: var(--gold); background: rgba(212,175,55,.07); }
+
+/* ── Game type breakdown ── */
+.type-stats {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.type-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: .78rem;
+}
+.type-pill .tp-name { font-weight: 600; opacity: .8; }
+.type-pill .tp-wl { font-family: 'DM Mono', monospace; font-size: .72rem; }
+.tp-w { color: #6fae8d; }
+.tp-l { color: #b1473e; }
+
+/* ── History cards ── */
+.hist-cards { display: flex; flex-direction: column; gap: 12px; }
+
+.hist-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(0,0,0,.12);
+  overflow: hidden;
+  transition: border-color .15s;
+}
+.hist-card:hover { border-color: rgba(212,175,55,.4); }
+
+.hist-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.hc-badge {
+  font-size: .68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  background: rgba(255,255,255,.08);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 3px 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.hc-main { flex: 1; min-width: 0; }
+.hc-players {
+  font-size: .88rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+.hc-meta { font-size: .72rem; opacity: .55; }
+
+.hc-result {
+  text-align: right;
+  flex-shrink: 0;
+}
+.hc-result .res-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; opacity: .5; }
+.hc-result .res-won  { color: #6fae8d; font-weight: 700; font-size: .8rem; }
+.hc-result .res-lost { color: #b1473e; font-weight: 600; font-size: .8rem; opacity: .85; }
+.hc-result .res-tawle { font-size: .8rem; }
+
+.hc-chevron {
+  font-size: .8rem;
+  opacity: .45;
+  transition: transform .2s;
+  flex-shrink: 0;
+}
+.hist-card.open .hc-chevron { transform: rotate(180deg); }
+
+/* Avatar row */
+.hc-avatars {
+  display: flex;
+  gap: -4px;
+  margin-bottom: 4px;
+}
+.hc-avatars img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid var(--surface);
+  margin-right: -6px;
+  background: rgba(0,0,0,.3);
+}
+
+/* ── Expandable rounds ── */
+.hist-card-body {
+  display: none;
+  border-top: 1px solid var(--line);
+  padding: 14px 16px;
+  background: rgba(0,0,0,.1);
+}
+.hist-card.open .hist-card-body { display: block; }
+
+.rounds-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .8rem;
+  font-family: 'DM Mono', monospace;
+}
+.rounds-table th {
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  opacity: .5;
+  font-weight: 600;
+  padding: 0 8px 8px;
+  text-align: center;
+  border-bottom: 1px solid var(--line);
+}
+.rounds-table th:first-child { text-align: left; }
+.rounds-table td { padding: 5px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,.04); }
+.rounds-table td:first-child { text-align: left; opacity: .4; font-size: .72rem; }
+.rounds-table tr:last-child td { border-bottom: none; }
+.rounds-table .tot-row td { font-weight: 700; font-size: .85rem; border-top: 1px solid var(--line); padding-top: 8px; opacity: 1; }
+.rounds-table .tot-row td:first-child { opacity: .5; }
+
+.pos-score { color: #6fae8d; }
+.neg-score { color: #b1473e; }
+
+/* Round note (bid info) */
+.round-note { font-size: .68rem; opacity: .5; display: block; margin-top: 1px; font-family: 'Inter', sans-serif; }
+
+/* Teams layout within card body */
+.teams-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.team-box {
+  flex: 1;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: rgba(0,0,0,.15);
+}
+.team-box.winner-box { border-color: var(--gold); background: rgba(212,175,55,.07); }
+.team-box .tb-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; opacity: .5; margin-bottom: 6px; }
+.team-box .tb-names {
+  font-size: .82rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.team-box .tb-score { font-size: 1.4rem; font-family: 'Fraunces', serif; font-weight: 700; line-height: 1; }
+.team-box .tb-trophy { font-size: .85rem; }
+.tb-avatars { display: flex; gap: 3px; margin-bottom: 6px; }
+.tb-avatars img { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--line); }
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -16,10 +218,18 @@
     <div class="user-chip" id="userChip"></div>
   </div>
 
+  <!-- Stats panel (hidden until loaded) -->
+  <div class="panel" id="statsPanel" style="display:none;">
+    <p class="eyebrow">Your record</p>
+    <h2 style="margin-top:0;" id="statsHeading">Stats</h2>
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="type-stats" id="typeStats"></div>
+  </div>
+
+  <!-- Filter panel -->
   <div class="panel" id="filterPanel" style="display:none;">
     <p class="eyebrow">Filters</p>
     <h2 style="margin-top:0;">Find a game</h2>
-
     <label for="gameTypeFilter">Game</label>
     <select id="gameTypeFilter">
       <option value="">All games</option>
@@ -28,13 +238,13 @@
       <option value="likha">Likha</option>
       <option value="tawle">Tawle</option>
     </select>
-
-    <label for="withPlayerFilter">With player</label>
+    <label for="withPlayerFilter" style="margin-top:10px;">With player</label>
     <select id="withPlayerFilter">
       <option value="">Anyone</option>
     </select>
   </div>
 
+  <!-- History list -->
   <div class="panel">
     <p class="eyebrow">Archive</p>
     <h2 style="margin-top:0;" id="historyHeading">Game history</h2>
@@ -52,147 +262,420 @@ const session = requireLogin();
 if (session) renderUserChip(session);
 
 const myFirstName = session.firstName.trim().toLowerCase();
-const myFullName = `${session.firstName} ${session.lastName}`.trim().toLowerCase();
+const myFullName  = `${session.firstName} ${session.lastName}`.trim().toLowerCase();
 
-// Returns true if a stored player name matches the logged-in user.
-// Matches if the stored name equals either:
-//   - just the user's firstName (e.g. "Charbel")
-//   - the user's full name (e.g. "Charbel Zaarour")
-// Comparison is case-insensitive.
 function nameMatchesMe(name) {
   if (!name) return false;
   const n = name.trim().toLowerCase();
   return n === myFirstName || n === myFullName;
 }
 
-// Returns true if the logged-in user participated in this game record.
 function userIsInGame(g) {
   if (g.type === "tawle") {
-    const players = g.players || [];
-    return players.some(nameMatchesMe) ||
-           nameMatchesMe(g.winner) ||
-           nameMatchesMe(g.loser);
+    return (g.players||[]).some(nameMatchesMe) || nameMatchesMe(g.winner) || nameMatchesMe(g.loser);
   }
-  const players = g.players || [];
-  return players.some(nameMatchesMe);
+  return (g.players||[]).some(nameMatchesMe);
 }
 
 function gameOpponents(g) {
-  // All other players in this specific game, excluding me.
-  let players = [];
-  if (g.type === "tawle") {
-    players = g.players && g.players.length ? g.players : [g.winner, g.loser].filter(Boolean);
-  } else {
-    players = g.players || [];
-  }
+  let players = g.type === "tawle"
+    ? (g.players && g.players.length ? g.players : [g.winner, g.loser].filter(Boolean))
+    : (g.players||[]);
   return players.filter(p => p && !nameMatchesMe(p));
 }
 
-let allGames = [];
-let myGames = [];
+// Did I win this game?
+function didIWin(g) {
+  if (g.type === "tawle") return nameMatchesMe(g.winner);
+  const wt = g.winningTeam || [];
+  return wt.some(nameMatchesMe);
+}
+
+// All users (for avatars)
+let allUsers = [];
+function avatarSrc(name) {
+  if (!name) return `https://api.dicebear.com/7.x/initials/svg?seed=?`;
+  const u = allUsers.find(u =>
+    `${u.firstName} ${u.lastName}`.trim().toLowerCase() === name.trim().toLowerCase() ||
+    u.firstName.toLowerCase() === name.trim().toLowerCase()
+  );
+  if (u && u.image) return u.image;
+  return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name.trim())}`;
+}
+
+let allGames = [], myGames = [];
 
 async function load() {
   const listEl = document.getElementById("historyList");
   try {
-    allGames = await fetchHistory();
+    // Load users and history in parallel
+    [allUsers, allGames] = await Promise.all([fetchUsers().catch(()=>[]), fetchHistory()]);
+
     myGames = allGames.filter(userIsInGame);
 
     if (myGames.length === 0) {
-      document.getElementById("historyHeading").textContent = "No access";
-      listEl.innerHTML = `<div class="empty-state">
-        You haven't played any recorded games yet, so there's no history to show.
-        Play a game and it'll appear here.
-      </div>`;
+      document.getElementById("historyHeading").textContent = "No games yet";
+      listEl.innerHTML = `<div class="empty-state">You haven't played any recorded games yet. Play a game and it'll appear here.</div>`;
       return;
     }
 
-    document.getElementById("filterPanel").style.display = "";
+    buildStats();
+    document.getElementById("filterPanel").style.display  = "";
     populateWithPlayerFilter();
     render();
-  } catch (e) {
+  } catch(e) {
     listEl.innerHTML = `<div class="empty-state">Could not load history: ${e.message}</div>`;
   }
 }
 
+// ─────────────────────────────────────────────
+// Stats
+// ─────────────────────────────────────────────
+function buildStats() {
+  const statsPanel = document.getElementById("statsPanel");
+  statsPanel.style.display = "";
+
+  const total = myGames.length;
+  const wins  = myGames.filter(didIWin).length;
+  const losses = total - wins;
+  const winPct = total > 0 ? Math.round((wins/total)*100) : 0;
+
+  // Per game type breakdown
+  const typeMap = {}; // { tarneeb: {w,l}, ... }
+  myGames.forEach(g => {
+    const t = g.type || "unknown";
+    if (!typeMap[t]) typeMap[t] = { w:0, l:0 };
+    if (didIWin(g)) typeMap[t].w++; else typeMap[t].l++;
+  });
+
+  const statsGrid = document.getElementById("statsGrid");
+  statsGrid.innerHTML = `
+    <div class="stat-card highlight">
+      <div class="st-label">Win rate</div>
+      <div class="st-value">${winPct}%</div>
+      <div class="st-sub">${wins}W · ${losses}L</div>
+    </div>
+    <div class="stat-card">
+      <div class="st-label">Games</div>
+      <div class="st-value">${total}</div>
+      <div class="st-sub">total played</div>
+    </div>
+    <div class="stat-card">
+      <div class="st-label">Wins</div>
+      <div class="st-value" style="color:#6fae8d;">${wins}</div>
+      <div class="st-sub">victories</div>
+    </div>
+    <div class="stat-card">
+      <div class="st-label">Losses</div>
+      <div class="st-value" style="color:#b1473e;">${losses}</div>
+      <div class="st-sub">defeats</div>
+    </div>
+  `;
+
+  const TYPE_LABELS = { tarneeb:"Tarneeb", "400":"400", likha:"Likha", tawle:"Tawle" };
+  const typeStats = document.getElementById("typeStats");
+  typeStats.innerHTML = Object.entries(typeMap).map(([t, {w,l}]) => `
+    <div class="type-pill">
+      <span class="tp-name">${TYPE_LABELS[t]||t}</span>
+      <span class="tp-wl"><span class="tp-w">${w}W</span> <span style="opacity:.4">·</span> <span class="tp-l">${l}L</span></span>
+    </div>`).join("");
+}
+
+// ─────────────────────────────────────────────
+// Filter helpers
+// ─────────────────────────────────────────────
 function populateWithPlayerFilter() {
   const gameType = document.getElementById("gameTypeFilter").value;
-  const select = document.getElementById("withPlayerFilter");
+  const select   = document.getElementById("withPlayerFilter");
   const prevValue = select.value;
-
-  // Pool all players who ever appeared (with me) in games of the selected type
-  // (or all my games if no type selected), excluding me.
   const pool = new Set();
   myGames.forEach(g => {
     if (gameType && g.type !== gameType) return;
     gameOpponents(g).forEach(p => pool.add(p));
   });
-
-  const names = Array.from(pool).sort((a, b) => a.localeCompare(b));
-  select.innerHTML = '<option value="">Anyone</option>' +
-    names.map(n => `<option value="${n}">${n}</option>`).join("");
-
+  const names = Array.from(pool).sort((a,b) => a.localeCompare(b));
+  select.innerHTML = '<option value="">Anyone</option>' + names.map(n=>`<option value="${n}">${n}</option>`).join("");
   if (names.includes(prevValue)) select.value = prevValue;
 }
 
+// ─────────────────────────────────────────────
+// Render
+// ─────────────────────────────────────────────
 function render() {
-  const gameType = document.getElementById("gameTypeFilter").value;
+  const gameType   = document.getElementById("gameTypeFilter").value;
   const withPlayer = document.getElementById("withPlayerFilter").value;
-
   let games = myGames.slice();
+  if (gameType)   games = games.filter(g => g.type === gameType);
+  if (withPlayer) games = games.filter(g => gameOpponents(g).includes(withPlayer));
+  games.sort((a,b) => new Date(b.date) - new Date(a.date));
 
-  if (gameType) {
-    games = games.filter(g => g.type === gameType);
-  }
-  if (withPlayer) {
-    games = games.filter(g => gameOpponents(g).includes(withPlayer));
-  }
-
-  games.sort((a, b) => new Date(b.date) - new Date(a.date));
+  // Update heading
+  const filtered = games.length !== myGames.length;
+  document.getElementById("historyHeading").textContent = filtered
+    ? `${games.length} game${games.length!==1?"s":""} found`
+    : `${myGames.length} game${myGames.length!==1?"s":""}`;
 
   const listEl = document.getElementById("historyList");
   if (games.length === 0) {
     listEl.innerHTML = '<div class="empty-state">No games match these filters.</div>';
     return;
   }
-  listEl.innerHTML = games.map(renderHistItem).join("");
+  listEl.innerHTML = "";
+  const container = document.createElement("div");
+  container.className = "hist-cards";
+  games.forEach(g => container.appendChild(buildCard(g)));
+  listEl.appendChild(container);
 }
 
-function renderHistItem(g) {
-  const dateStr = new Date(g.date).toLocaleString(undefined, {
-    year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
-  });
-  const typeLabel = { "400": "400", "tarneeb": "Tarneeb", "likha": "Likha", "tawle": "Tawle" }[g.type] || g.type;
+// ─────────────────────────────────────────────
+// Card builder
+// ─────────────────────────────────────────────
+const TYPE_LABELS = { tarneeb:"Tarneeb", "400":"400", likha:"Likha", tawle:"Tawle" };
 
-  let winnerStr, loserStr = "";
+function buildCard(g) {
+  const card = document.createElement("div");
+  card.className = "hist-card";
+
+  const iWon = didIWin(g);
+  const dateStr = new Date(g.date).toLocaleString(undefined, {
+    year:"numeric", month:"short", day:"numeric", hour:"2-digit", minute:"2-digit"
+  });
+  const typeLabel = TYPE_LABELS[g.type] || g.type;
+
+  // ── Header ──
+  const header = document.createElement("div");
+  header.className = "hist-card-header";
+
+  // Badge
+  const badge = document.createElement("div");
+  badge.className = "hc-badge";
+  badge.textContent = typeLabel;
+
+  // Main info
+  const main = document.createElement("div");
+  main.className = "hc-main";
+
   if (g.type === "tawle") {
-    winnerStr = `🏆 ${g.winner}`;
-    if (g.loser) {
-      loserStr = `<div class="hloser">lost: ${g.loser}</div>`;
-    }
+    const players = g.players && g.players.length ? g.players : [g.winner, g.loser].filter(Boolean);
+    const avHtml = players.map(p => `<img src="${avatarSrc(p)}" alt="${p}" title="${p}">`).join("");
+    main.innerHTML = `
+      <div class="hc-avatars">${avHtml}</div>
+      <div class="hc-players">${players.join(" vs ")}</div>
+      <div class="hc-meta">${dateStr}</div>`;
   } else {
-    const winners = g.winningTeam || [];
     const players = g.players || [];
-    const losers = players.filter(p => !winners.includes(p));
-    winnerStr = `🏆 ${winners.join(" & ")} — ${g.finalScore ?? ""}`;
-    if (losers.length) {
-      loserStr = `<div class="hloser">lost: ${losers.join(" & ")}</div>`;
+    const avHtml = players.map(p => `<img src="${avatarSrc(p)}" alt="${p}" title="${p}">`).join("");
+    const teamA = [players[0], players[1]].filter(Boolean).join(" & ");
+    const teamB = [players[2], players[3]].filter(Boolean).join(" & ");
+    main.innerHTML = `
+      <div class="hc-avatars">${avHtml}</div>
+      <div class="hc-players">${teamA} <span style="opacity:.4">vs</span> ${teamB}</div>
+      <div class="hc-meta">${dateStr} · ${(g.rounds||[]).length} rounds</div>`;
+  }
+
+  // Result badge
+  const result = document.createElement("div");
+  result.className = "hc-result";
+  if (g.type === "tawle") {
+    result.innerHTML = `<div class="res-label">result</div><div class="res-tawle">${iWon ? "🏆 Won" : "💀 Lost"}</div>`;
+  } else {
+    result.innerHTML = `
+      <div class="res-label">result</div>
+      <div class="${iWon ? "res-won" : "res-lost"}">${iWon ? "🏆 Won" : "Lost"}</div>`;
+    if (g.finalScore != null) {
+      result.innerHTML += `<div style="font-size:.68rem;opacity:.45;margin-top:2px;">score ${g.finalScore}</div>`;
     }
   }
 
-  return `
-    <div class="hist-item">
-      <div>
-        <div class="hgame">${typeLabel}</div>
-        <div class="hdate">${dateStr}</div>
-      </div>
-      <div class="hwinner">
-        ${winnerStr}
-        ${loserStr}
-      </div>
-    </div>
-  `;
+  const chevron = document.createElement("div");
+  chevron.className = "hc-chevron";
+  chevron.textContent = "▾";
+
+  header.appendChild(badge);
+  header.appendChild(main);
+  header.appendChild(result);
+  header.appendChild(chevron);
+
+  // ── Body (expandable) ──
+  const body = document.createElement("div");
+  body.className = "hist-card-body";
+  body.appendChild(buildCardBody(g));
+
+  // Toggle
+  header.addEventListener("click", () => card.classList.toggle("open"));
+
+  card.appendChild(header);
+  card.appendChild(body);
+  return card;
 }
 
+// ─────────────────────────────────────────────
+// Card body (teams + rounds table)
+// ─────────────────────────────────────────────
+function buildCardBody(g) {
+  const frag = document.createDocumentFragment();
+
+  if (g.type === "tawle") {
+    const winner = g.winner || "?";
+    const loser  = g.loser  || "?";
+    const div = document.createElement("div");
+    div.innerHTML = `
+      <div class="teams-row">
+        <div class="team-box winner-box">
+          <div class="tb-label">Winner 🏆</div>
+          <div class="tb-avatars"><img src="${avatarSrc(winner)}" alt="${winner}"></div>
+          <div class="tb-names">${winner}</div>
+        </div>
+        <div class="team-box">
+          <div class="tb-label">Lost</div>
+          <div class="tb-avatars"><img src="${avatarSrc(loser)}" alt="${loser}"></div>
+          <div class="tb-names" style="opacity:.6;">${loser}</div>
+        </div>
+      </div>`;
+    frag.appendChild(div);
+    return frag;
+  }
+
+  // 4-player game
+  const players = g.players || [];
+  const winners = g.winningTeam || [];
+  const losers  = players.filter(p => !winners.includes(p));
+
+  const teamA = [players[0], players[1]].filter(Boolean);
+  const teamB = [players[2], players[3]].filter(Boolean);
+  const aWon  = teamA.some(p => winners.includes(p));
+
+  // ── Teams summary ──
+  const teamsDiv = document.createElement("div");
+  teamsDiv.className = "teams-row";
+
+  const makeTeamBox = (team, won) => {
+    const box = document.createElement("div");
+    box.className = "team-box" + (won ? " winner-box" : "");
+    const avHtml = team.map(p => `<img src="${avatarSrc(p)}" alt="${p}" title="${p}">`).join("");
+    const scoreDisplay = getTeamScore(g, team);
+    box.innerHTML = `
+      <div class="tb-label">${won ? "Winners 🏆" : "Lost"}</div>
+      <div class="tb-avatars">${avHtml}</div>
+      <div class="tb-names" style="${won?"":"opacity:.7;"}">${team.join(" & ")}</div>
+      ${scoreDisplay !== null ? `<div class="tb-score">${scoreDisplay}</div>` : ""}`;
+    return box;
+  };
+
+  teamsDiv.appendChild(makeTeamBox(teamA, aWon));
+  teamsDiv.appendChild(makeTeamBox(teamB, !aWon));
+  frag.appendChild(teamsDiv);
+
+  // ── Rounds table ──
+  const rounds = g.rounds || [];
+  if (rounds.length === 0) {
+    const noRounds = document.createElement("p");
+    noRounds.style.cssText = "font-size:.78rem;opacity:.45;text-align:center;margin:4px 0 0;";
+    noRounds.textContent = "No round breakdown available.";
+    frag.appendChild(noRounds);
+    return frag;
+  }
+
+  const isPerPlayer = Array.isArray(rounds[0]);
+  const table = document.createElement("table");
+  table.className = "rounds-table";
+
+  // Header
+  const thead = document.createElement("thead");
+  if (isPerPlayer) {
+    thead.innerHTML = `<tr><th>#</th>${players.map(p=>`<th>${p.split(" ")[0]}</th>`).join("")}</tr>`;
+  } else {
+    thead.innerHTML = `<tr><th>#</th><th>${(teamA.map(p=>p.split(" ")[0])).join("/")}</th><th>${(teamB.map(p=>p.split(" ")[0])).join("/")}</th></tr>`;
+  }
+  table.appendChild(thead);
+
+  // Body
+  const tbody = document.createElement("tbody");
+  rounds.forEach((rnd, i) => {
+    const tr = document.createElement("tr");
+    if (isPerPlayer) {
+      tr.innerHTML = `<td>${i+1}</td>${rnd.map(v=>`<td class="${v>0?"pos-score":v<0?"neg-score":""}">${v>0?"+":""}${v}</td>`).join("")}`;
+    } else {
+      // Tarneeb: rnd = {a, b, bidTeam, bid, tricksWon, success}
+      let noteA = "", noteB = "";
+      if (rnd.bidTeam) {
+        const bidLabel = rnd.bid === 26 ? "26 (all 13)" : rnd.bid;
+        const note = `<span class="round-note">bid ${bidLabel}, won ${rnd.tricksWon} — ${rnd.success?"✓ made":"✗ failed"}</span>`;
+        if (rnd.bidTeam === "a") noteA = note; else noteB = note;
+      }
+      tr.innerHTML = `
+        <td>${i+1}</td>
+        <td class="${rnd.a>0?"pos-score":rnd.a<0?"neg-score":""}">${rnd.a>0?"+":""}${rnd.a}${noteA}</td>
+        <td class="${rnd.b>0?"pos-score":rnd.b<0?"neg-score":""}">${rnd.b>0?"+":""}${rnd.b}${noteB}</td>`;
+    }
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+
+  // Totals footer
+  const tfoot = document.createElement("tfoot");
+  if (isPerPlayer) {
+    const totals = computePerPlayerTotals(rounds);
+    tfoot.innerHTML = `<tr class="tot-row"><td>Σ</td>${totals.map(v=>`<td>${v}</td>`).join("")}</tr>`;
+  } else {
+    const totals = computeTeamTotals(rounds);
+    tfoot.innerHTML = `<tr class="tot-row"><td>Σ</td><td>${totals.a}</td><td>${totals.b}</td></tr>`;
+  }
+  table.appendChild(tfoot);
+
+  const tableWrap = document.createElement("div");
+  tableWrap.style.overflowX = "auto";
+  tableWrap.appendChild(table);
+  frag.appendChild(tableWrap);
+
+  // Recorded by note
+  if (g.recordedBy) {
+    const note = document.createElement("p");
+    note.style.cssText = "font-size:.68rem;opacity:.35;text-align:right;margin:8px 0 0;";
+    note.textContent = `Recorded by ${g.recordedBy}`;
+    frag.appendChild(note);
+  }
+
+  return frag;
+}
+
+function getTeamScore(g, team) {
+  // Try to pull a meaningful score for this team from the record
+  if (g.finalScore != null && g.winningTeam && g.winningTeam.length) {
+    const isWinner = team.some(p => (g.winningTeam||[]).includes(p));
+    if (isWinner) return g.finalScore;
+  }
+  // Fall back to computing from totals field
+  if (g.totals) {
+    if (typeof g.totals === "object" && !Array.isArray(g.totals)) {
+      const players = g.players || [];
+      const isTeamA = team.includes(players[0]) || team.includes(players[1]);
+      return isTeamA ? (g.totals.a ?? null) : (g.totals.b ?? null);
+    }
+    if (Array.isArray(g.totals)) {
+      const players = g.players || [];
+      const idxs = team.map(p => players.indexOf(p)).filter(i => i >= 0);
+      if (idxs.length) return idxs.map(i => g.totals[i]).join("/");
+    }
+  }
+  return null;
+}
+
+function computePerPlayerTotals(rounds) {
+  const totals = Array(rounds[0] ? rounds[0].length : 4).fill(0);
+  rounds.forEach(rnd => rnd.forEach((v,i) => totals[i] += v));
+  return totals;
+}
+
+function computeTeamTotals(rounds) {
+  let a = 0, b = 0;
+  rounds.forEach(rnd => { a += rnd.a||0; b += rnd.b||0; });
+  return { a, b };
+}
+
+// ─────────────────────────────────────────────
+// Filter listeners
+// ─────────────────────────────────────────────
 document.getElementById("gameTypeFilter").addEventListener("change", () => {
   populateWithPlayerFilter();
   render();
