@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Card Table — Sign Up</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="style.css">
+<style>
+.auth-links {
+  display: flex;
+  justify-content: center;
+  margin-top: 18px;
+}
+.auth-links a {
+  font-size: .83rem;
+  opacity: .65;
+  text-decoration: none;
+  color: inherit;
+  transition: opacity .15s;
+}
+.auth-links a:hover { opacity: 1; }
+
+.success-box {
+  text-align: center;
+  padding: 10px 0;
+}
+.success-box .sb-icon { font-size: 2.5rem; margin-bottom: 10px; }
+.success-box h3 { margin: 0 0 8px; font-family: 'Fraunces', serif; }
+.success-box p { font-size: .85rem; opacity: .75; line-height: 1.6; margin: 0 0 18px; }
+.success-box .wa-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: #25D366; color: #fff;
+  border: none; border-radius: 10px;
+  padding: 12px 22px; font-size: .92rem; font-weight: 700;
+  cursor: pointer; text-decoration: none;
+  font-family: 'Inter', sans-serif;
+}
+</style>
+</head>
+<body>
+<div class="wrap" style="max-width:420px;">
+  <div class="brand" style="justify-content:center; border-bottom:none; margin-bottom:36px;">
+    <div style="text-align:center;">
+      <div class="suit" style="display:block; margin-bottom:6px; font-size:1.4rem; letter-spacing:.4em;">♠ ♥ ♦ ♣</div>
+      <h1>Card Table</h1>
+    </div>
+  </div>
+
+  <!-- Sign up form -->
+  <div class="panel" id="formPanel">
+    <p class="eyebrow">New account</p>
+    <h2 style="margin-top:0;">Sign up</h2>
+
+    <label for="firstName">First name</label>
+    <input type="text" id="firstName" autocomplete="given-name" placeholder="Elie">
+
+    <label for="lastName">Last name</label>
+    <input type="text" id="lastName" autocomplete="family-name" placeholder="Zaarour">
+
+    <label for="username">Username</label>
+    <input type="text" id="username" autocomplete="username" placeholder="elie"
+      style="text-transform:lowercase;">
+
+    <label for="phone">Phone number</label>
+    <input type="text" id="phone" autocomplete="tel" placeholder="+961 XX XXX XXX">
+
+    <label for="password">Password</label>
+    <input type="password" id="password" autocomplete="new-password" placeholder="••••••••">
+
+    <label for="confirm">Confirm password</label>
+    <input type="password" id="confirm" autocomplete="new-password" placeholder="••••••••">
+
+    <div class="error" id="signupError"></div>
+    <button class="full" id="signupBtn" style="margin-top:18px;">Create account</button>
+
+    <div class="auth-links">
+      <a href="index.html">Already have an account? Sign in</a>
+    </div>
+  </div>
+
+  <!-- Success state -->
+  <div class="panel" id="successPanel" style="display:none;">
+    <div class="success-box">
+      <div class="sb-icon">🎉</div>
+      <h3>Account created!</h3>
+      <p>
+        Your account is pending approval by the admin.<br>
+        Tap the button below to message them on WhatsApp —
+        once approved you'll be able to sign in.
+      </p>
+      <a id="waLink" href="#" target="_blank" rel="noopener" class="wa-btn">
+        💬 Message admin on WhatsApp
+      </a>
+      <br><br>
+      <a href="index.html" style="font-size:.82rem; opacity:.6; color:inherit; text-decoration:none;">
+        ← Back to sign in
+      </a>
+    </div>
+  </div>
+</div>
+
+<script src="common.js"></script>
+<script>
+const ADMIN_WA = "+96170234138";
+
+document.getElementById("signupBtn").addEventListener("click", signUp);
+["firstName","lastName","username","phone","password","confirm"].forEach(id => {
+  document.getElementById(id).addEventListener("keydown", e => {
+    if (e.key === "Enter") signUp();
+  });
+});
+
+// Lowercase username as user types
+document.getElementById("username").addEventListener("input", e => {
+  const el = e.target;
+  const pos = el.selectionStart;
+  el.value = el.value.toLowerCase();
+  el.setSelectionRange(pos, pos);
+});
+
+async function signUp() {
+  const errEl = document.getElementById("signupError");
+  errEl.textContent = "";
+
+  const firstName = document.getElementById("firstName").value.trim();
+  const lastName  = document.getElementById("lastName").value.trim();
+  const username  = document.getElementById("username").value.trim().toLowerCase();
+  const phone     = document.getElementById("phone").value.trim();
+  const password  = document.getElementById("password").value;
+  const confirm   = document.getElementById("confirm").value;
+
+  // Validation
+  if (!firstName || !lastName || !username || !password) {
+    errEl.textContent = "First name, last name, username, and password are required.";
+    return;
+  }
+  if (username.length < 3) {
+    errEl.textContent = "Username must be at least 3 characters.";
+    return;
+  }
+  if (!/^[a-z0-9_]+$/.test(username)) {
+    errEl.textContent = "Username can only contain letters, numbers, and underscores.";
+    return;
+  }
+  if (password.length < 4) {
+    errEl.textContent = "Password must be at least 4 characters.";
+    return;
+  }
+  if (password !== confirm) {
+    errEl.textContent = "Passwords don't match.";
+    return;
+  }
+
+  const btn = document.getElementById("signupBtn");
+  btn.disabled = true;
+  btn.textContent = "Creating account…";
+
+  try {
+    const res  = await fetch(SHEET_API_URL, {
+      method:  "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body:    JSON.stringify({ action:"signUp", username, firstName, lastName, phone, password })
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      errEl.textContent = data.error;
+      btn.disabled = false;
+      btn.textContent = "Create account";
+      return;
+    }
+
+    // Success — show WhatsApp prompt
+    const msg = encodeURIComponent(
+      `Hi, I just signed up for Card Table with username "${username}" (${firstName} ${lastName}). Please approve my account!`
+    );
+    document.getElementById("waLink").href =
+      `https://wa.me/${ADMIN_WA.replace(/\D/g,"")}?text=${msg}`;
+
+    document.getElementById("formPanel").style.display    = "none";
+    document.getElementById("successPanel").style.display = "";
+
+  } catch(e) {
+    errEl.textContent = "Could not connect. " + e.message;
+    btn.disabled = false;
+    btn.textContent = "Create account";
+  }
+}
+</script>
+</body>
+</html>
