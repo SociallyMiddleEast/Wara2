@@ -245,7 +245,11 @@ async function login() {
   btn.disabled = true; btn.textContent = "Checking…";
 
   try {
-    const users  = await fetchUsers();
+    // Timeout after 8s to prevent infinite "Checking..." state
+    const users = await Promise.race([
+      fetchUsers(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Connection timed out. Check your internet and try again.")), 8000))
+    ]);
     const hashed = await hashPassword(password);
     const match  = (users || []).find(u =>
       String(u.username).toLowerCase() === username.toLowerCase() &&
