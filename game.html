@@ -39,16 +39,45 @@
 
 /* ── Join game cards ── */
 .join-card {
-  border:1px solid var(--gold); border-radius:12px;
-  padding:16px; margin-bottom:12px;
-  background:rgba(212,175,55,.05); cursor:pointer;
-  transition:background .15s;
+  border:1px solid var(--line); border-radius:12px;
+  padding:16px; margin-bottom:16px;
+  background:rgba(0,0,0,.12);
 }
-.join-card:hover { background:rgba(212,175,55,.1); }
 .join-card .jc-type { font-size:.72rem; text-transform:uppercase; letter-spacing:.07em; opacity:.6; font-weight:600; }
 .join-card .jc-players { font-size:.92rem; font-weight:600; margin:4px 0 2px; }
 .join-card .jc-meta { font-size:.72rem; opacity:.5; }
 .join-card .jc-rounds { font-size:.75rem; opacity:.6; margin-top:4px; }
+.join-card .jc-avatars { display:flex; gap:4px; margin:8px 0 4px; }
+.join-card .jc-avatars img { width:28px; height:28px; border-radius:50%; object-fit:cover; border:1.5px solid var(--line); }
+
+/* Join action buttons */
+.join-actions {
+  display:flex; gap:10px; margin-top:14px;
+}
+.join-actions .btn-play {
+  flex:1; background:var(--gold); color:#1a1612;
+  border:none; border-radius:8px; padding:11px 16px;
+  font-size:.88rem; font-weight:700; cursor:pointer;
+  font-family:'Inter',sans-serif; transition:opacity .15s;
+  display:flex; align-items:center; justify-content:center; gap:6px;
+}
+.join-actions .btn-play:hover { opacity:.88; }
+.join-actions .btn-watch {
+  flex:1; background:transparent; color:inherit;
+  border:1px solid var(--line); border-radius:8px; padding:11px 16px;
+  font-size:.88rem; font-weight:600; cursor:pointer;
+  font-family:'Inter',sans-serif; transition:border-color .15s;
+  display:flex; align-items:center; justify-content:center; gap:6px;
+}
+.join-actions .btn-watch:hover { border-color:var(--gold); }
+
+/* Watch mode banner */
+#watchModeBanner {
+  background:rgba(0,0,0,.25); border:1px solid var(--line);
+  border-radius:10px; padding:10px 14px; margin-bottom:12px;
+  display:flex; align-items:center; gap:8px; font-size:.8rem; opacity:.7;
+}
+#watchModeBanner .wm-icon { font-size:1rem; }
 
 /* ── Score popup overlay ── */
 #scoreModal {
@@ -113,12 +142,18 @@
   <!-- JOIN EXISTING GAME panel -->
   <div class="panel" id="joinPanel" style="display:none;">
     <p class="eyebrow">Active game</p>
-    <h2 style="margin-top:0;">Rejoin your game</h2>
+    <h2 style="margin-top:0;">Game in progress</h2>
     <div id="joinCards"></div>
     <div style="margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">
       <p style="font-size:.82rem; opacity:.6; margin:0 0 10px;">Or start a brand new game:</p>
       <button class="secondary" id="startNewBtn">Start new game instead</button>
     </div>
+  </div>
+
+  <!-- WATCH MODE banner (shown inside scoringPanel when watching) -->
+  <div id="watchModeBanner" style="display:none;">
+    <span class="wm-icon">👁️</span>
+    <span>Watch mode — scores update automatically every 5 seconds. Only players can add rounds.</span>
   </div>
 
   <!-- SETUP PANEL (4-player games) -->
@@ -346,6 +381,8 @@ function namesMatch(storedName, firstName, lastName) {
 // ─────────────────────────────────────────────
 // Join panel
 // ─────────────────────────────────────────────
+let watchMode = false; // true = read-only, no round inputs
+
 function showJoinPanel(games, gameType) {
   document.getElementById("joinPanel").style.display = "";
   const container = document.getElementById("joinCards");
@@ -354,14 +391,37 @@ function showJoinPanel(games, gameType) {
   games.forEach(g => {
     const card = document.createElement("div");
     card.className = "join-card";
-    const rounds = g.state && g.state.rounds ? g.state.rounds.length : 0;
+    const rounds  = g.state && g.state.rounds ? g.state.rounds.length : 0;
     const players = Array.isArray(g.players) ? g.players : [];
+    const label   = (RULES[gameType]||{}).label || gameType;
+
+    // Avatars
+    const avHtml = players.map(p => {
+      const u = allUsers.find(u => `${u.firstName} ${u.lastName}`.trim() === p || u.firstName === p);
+      const src = (u && u.image) ? u.image : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p)}`;
+      return `<img src="${src}" alt="${p}" title="${p}">`;
+    }).join("");
+
+    // Is this user one of the players?
+    const iAmPlayer = players.some(p => namesMatch(p, session.firstName, session.lastName));
+
     card.innerHTML = `
-      <div class="jc-type">${(RULES[gameType]||{}).label || gameType}</div>
+      <div class="jc-type">${label}</div>
+      <div class="jc-avatars">${avHtml}</div>
       <div class="jc-players">${players.slice(0,2).join(" & ")} <span style="opacity:.4">vs</span> ${players.slice(2,4).join(" & ")}</div>
-      <div class="jc-meta">Started by ${g.startedBy}</div>
-      <div class="jc-rounds">${rounds} round${rounds!==1?"s":""} played</div>`;
-    card.addEventListener("click", () => joinGame(g));
+      <div class="jc-meta">Started by ${g.startedBy} · ${rounds} round${rounds!==1?"s":""} played</div>
+      <div class="join-actions">
+        ${iAmPlayer
+          ? `<button class="btn-play" onclick="joinGame(window._liveGames['${g.gameId}'], false)">🎮 Join & play</button>`
+          : `<button class="btn-play" style="opacity:.45; cursor:not-allowed;" disabled title="You're not a player in this game">🎮 Join & play</button>`
+        }
+        <button class="btn-watch" onclick="joinGame(window._liveGames['${g.gameId}'], true)">👁️ Watch only</button>
+      </div>`;
+
+    // Store game ref for onclick access
+    if (!window._liveGames) window._liveGames = {};
+    window._liveGames[g.gameId] = g;
+
     container.appendChild(card);
   });
 
@@ -371,21 +431,32 @@ function showJoinPanel(games, gameType) {
   });
 }
 
-async function joinGame(liveGame) {
+async function joinGame(liveGame, watchOnly) {
+  watchMode     = watchOnly;
   gameId        = liveGame.gameId;
-  isScoreKeeper = true;
+  isScoreKeeper = !watchOnly;
   state         = Object.assign(state, liveGame.state || {});
   state.type    = type;
   state.players = liveGame.players || [];
 
-  document.getElementById("joinPanel").style.display = "none";
+  document.getElementById("joinPanel").style.display   = "none";
   document.getElementById("scoringPanel").style.display = "";
   document.getElementById("scoringEyebrow").textContent = buildEyebrow();
   document.getElementById("scoringHeading").textContent =
     `${state.players[0]}/${state.players[1]} vs ${state.players[2]}/${state.players[3]}`;
 
   buildLedgerHeader();
-  buildRoundInputs();
+
+  if (watchOnly) {
+    // Show watch banner, hide round input row and add button
+    document.getElementById("watchModeBanner").style.display = "";
+    document.getElementById("roundInputRow").style.display   = "none";
+    document.getElementById("addRoundBtn").style.display     = "none";
+    document.getElementById("cancelEditBtn").style.display   = "none";
+  } else {
+    buildRoundInputs();
+  }
+
   renderLedger();
   showLiveBadge();
   startPolling();
@@ -614,7 +685,8 @@ function applyRemoteState(remoteState) {
   state.totals       = remoteState.totals       || state.totals;
   state.playerTotals = remoteState.playerTotals || state.playerTotals;
   renderLedger();
-  setSyncStatus("Updated " + new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}));
+  const timeStr = new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+  setSyncStatus((watchMode ? "👁️ Live · " : "Updated ") + timeStr);
   // Check if remote already finished the game
   if (remoteState.finished && !state.finished) {
     state.finished    = true;
