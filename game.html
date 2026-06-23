@@ -8,6 +8,77 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="style.css">
+<style>
+/* ── Player picker ── */
+.player-pick { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+.player-pick img { width:38px; height:38px; border-radius:50%; object-fit:cover; border:2px solid var(--gold); background:rgba(0,0,0,0.25); flex-shrink:0; }
+.player-pick select { flex:1; }
+.player-pick-label { font-size:0.78rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; opacity:.6; margin-bottom:4px; }
+
+/* ── Score popup overlay ── */
+#scoreModal {
+  position:fixed; inset:0; z-index:800;
+  background:rgba(0,0,0,.72);
+  backdrop-filter:blur(6px);
+  display:flex; align-items:center; justify-content:center;
+  padding:16px;
+}
+#scoreModal.hidden { display:none; }
+.score-modal-box {
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:16px;
+  width:100%; max-width:460px;
+  max-height:88vh; overflow-y:auto;
+  padding:24px;
+  position:relative;
+}
+.score-modal-box h3 { margin:0 0 4px; font-family:'Fraunces',serif; font-size:1.25rem; }
+.score-modal-box .eyebrow { margin:0 0 12px; }
+.modal-close {
+  position:absolute; top:14px; right:16px;
+  background:none; border:none; cursor:pointer;
+  font-size:1.4rem; line-height:1; opacity:.6; padding:4px 8px;
+  color:inherit;
+}
+.modal-close:hover { opacity:1; }
+
+/* Score summary cards */
+.score-cards { display:flex; gap:10px; margin-bottom:16px; }
+.score-card {
+  flex:1; border:1px solid var(--line); border-radius:10px;
+  padding:14px 12px; text-align:center; background:rgba(0,0,0,.18);
+}
+.score-card.winning { border-color:var(--gold); background:rgba(212,175,55,.08); }
+.score-card .sc-names { font-size:.78rem; opacity:.7; margin-bottom:4px; font-weight:500; }
+.score-card .sc-score { font-size:2rem; font-family:'Fraunces',serif; font-weight:700; line-height:1; }
+.score-card .sc-label { font-size:.7rem; opacity:.55; margin-top:4px; }
+.score-card .sc-avatars { display:flex; justify-content:center; gap:4px; margin-bottom:8px; }
+.score-card .sc-avatars img { width:28px; height:28px; border-radius:50%; object-fit:cover; border:1.5px solid var(--line); }
+
+/* Mini ledger inside popup */
+.mini-ledger { font-size:.82rem; }
+.mini-ledger table { width:100%; border-collapse:collapse; }
+.mini-ledger th, .mini-ledger td { padding:5px 8px; text-align:center; border-bottom:1px solid rgba(255,255,255,.06); }
+.mini-ledger thead th { font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; opacity:.55; font-weight:600; padding-bottom:8px; }
+.mini-ledger tr:last-child td { border-bottom:none; }
+.mini-ledger .tot-row td { font-weight:700; border-top:1px solid var(--line); padding-top:8px; }
+.mini-ledger td.rd { opacity:.45; font-size:.75rem; }
+
+/* Fab score button */
+#scoreFab {
+  position:fixed; bottom:24px; right:20px;
+  background:var(--gold); color:#1a1612;
+  border:none; border-radius:50px;
+  padding:11px 18px; font-size:.85rem; font-weight:700;
+  cursor:pointer; box-shadow:0 4px 16px rgba(0,0,0,.4);
+  display:none; align-items:center; gap:7px; z-index:700;
+  font-family:'Inter',sans-serif;
+  transition:transform .15s;
+}
+#scoreFab:active { transform:scale(.96); }
+#scoreFab .fab-icon { font-size:1.1rem; }
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -21,19 +92,32 @@
     <p class="eyebrow" id="setupEyebrow">Setup</p>
     <h2 style="margin-top:0;">Who's playing?</h2>
 
-    <div class="team-label">Team A</div>
-    <div class="team-sub">Partners sit across from each other</div>
-    <label for="p1">Player 1</label>
-    <input type="text" id="p1" placeholder="Name">
-    <label for="p2">Player 2 (partner)</label>
-    <input type="text" id="p2" placeholder="Name">
+    <div id="playerPickersLoading" style="opacity:.6; font-size:.85rem; margin-bottom:12px;">Loading players…</div>
 
-    <div class="team-label" style="margin-top:18px;">Team B</div>
-    <div class="team-sub">Partners sit across from each other</div>
-    <label for="p3">Player 1</label>
-    <input type="text" id="p3" placeholder="Name">
-    <label for="p4">Player 2 (partner)</label>
-    <input type="text" id="p4" placeholder="Name">
+    <div id="playerPickers" style="display:none;">
+      <div class="team-label">Team A</div>
+      <div class="team-sub">Partners sit across from each other</div>
+      <div class="player-pick-label" style="margin-top:12px;">Player 1</div>
+      <div class="player-pick" id="pick0"></div>
+      <div class="player-pick-label">Player 2 (partner)</div>
+      <div class="player-pick" id="pick1"></div>
+
+      <div class="team-label" style="margin-top:18px;">Team B</div>
+      <div class="team-sub">Partners sit across from each other</div>
+      <div class="player-pick-label" style="margin-top:12px;">Player 1</div>
+      <div class="player-pick" id="pick2"></div>
+      <div class="player-pick-label">Player 2 (partner)</div>
+      <div class="player-pick" id="pick3"></div>
+
+      <!-- Custom name fallback if a player isn't in the DB -->
+      <details style="margin-top:14px;">
+        <summary style="font-size:.8rem; opacity:.6; cursor:pointer;">Player not in the list? Add a guest name</summary>
+        <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;" id="guestInputs">
+          <input type="text" id="guestName" placeholder="Guest display name">
+          <div style="display:flex; gap:8px; flex-wrap:wrap;" id="guestSlotBtns"></div>
+        </div>
+      </details>
+    </div>
 
     <div class="error" id="setupError"></div>
     <button class="full" id="startBtn" style="margin-top:18px;">Start game</button>
@@ -43,10 +127,15 @@
   <div class="panel" id="tawleSetupPanel" style="display:none;">
     <p class="eyebrow">Setup</p>
     <h2 style="margin-top:0;">Who's playing?</h2>
-    <label for="tawleP1">Player 1</label>
-    <input type="text" id="tawleP1" placeholder="Name">
-    <label for="tawleP2">Player 2</label>
-    <input type="text" id="tawleP2" placeholder="Name">
+
+    <div id="tawlePickersLoading" style="opacity:.6; font-size:.85rem; margin-bottom:12px;">Loading players…</div>
+    <div id="tawlePickers" style="display:none;">
+      <div class="player-pick-label">Player 1</div>
+      <div class="player-pick" id="tawlePick0"></div>
+      <div class="player-pick-label" style="margin-top:10px;">Player 2</div>
+      <div class="player-pick" id="tawlePick1"></div>
+    </div>
+
     <div class="error" id="tawleSetupError"></div>
     <button class="full" id="tawleStartBtn" style="margin-top:18px;">Start</button>
   </div>
@@ -55,23 +144,13 @@
   <div class="panel" id="scoringPanel" style="display:none;">
     <p class="eyebrow" id="scoringEyebrow">In progress</p>
     <h2 style="margin-top:0;" id="scoringHeading">Scoreboard</h2>
-
     <div class="ledger">
       <table>
-        <thead>
-          <tr id="ledgerHeadRow">
-            <th style="width:14%;"></th>
-          </tr>
-        </thead>
+        <thead><tr id="ledgerHeadRow"><th style="width:14%;"></th></tr></thead>
         <tbody id="ledgerBody"></tbody>
-        <tfoot>
-          <tr class="total-row" id="ledgerTotalRow">
-            <td>Total</td>
-          </tr>
-        </tfoot>
+        <tfoot><tr class="total-row" id="ledgerTotalRow"><td>Total</td></tr></tfoot>
       </table>
     </div>
-
     <div class="score-input-row" id="roundInputRow"></div>
     <div class="error" id="roundError"></div>
     <div class="bottom-nav" style="margin-top:14px;">
@@ -81,13 +160,13 @@
   </div>
 
   <!-- FIREWORKS OVERLAY -->
-  <canvas id="fireworksCanvas" style="position:fixed; inset:0; width:100vw; height:100vh; pointer-events:none; z-index:999; display:none;"></canvas>
+  <canvas id="fireworksCanvas" style="position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:999;display:none;"></canvas>
 
   <!-- WINNER BANNER -->
   <div class="banner" id="winnerBanner" style="display:none;">
     <div class="trophy">🏆</div>
     <h3 id="winnerText"></h3>
-    <div id="winnerSub" style="font-size:0.85rem; opacity:0.8;"></div>
+    <div id="winnerSub" style="font-size:.85rem;opacity:.8;"></div>
     <div class="bottom-nav" style="margin-top:14px;">
       <button class="btn" id="saveResultBtn">Save to history</button>
       <a class="btn secondary" href="app.html">Back to games</a>
@@ -99,20 +178,15 @@
   <div class="panel" id="tawlePanel" style="display:none;">
     <p class="eyebrow">Tawle</p>
     <h2 style="margin-top:0;" id="tawleHeading">Roll the dice</h2>
-
     <div class="dice-area">
       <div class="die" id="die1"></div>
       <div class="die" id="die2"></div>
     </div>
     <div class="dice-sum" id="diceSum">—</div>
     <div class="dice-double" id="diceDouble"></div>
-
     <button class="full" id="rollBtn" style="margin-top:10px;">🎲 Roll dice</button>
-
-    <div style="margin-top:22px; border-top:1px solid var(--line); padding-top:18px;">
-      <p style="font-size:0.85rem; opacity:0.8; margin:0 0 10px;">
-        When the game is decided, declare the winner:
-      </p>
+    <div style="margin-top:22px;border-top:1px solid var(--line);padding-top:18px;">
+      <p style="font-size:.85rem;opacity:.8;margin:0 0 10px;">When the game is decided, declare the winner:</p>
       <div class="bottom-nav">
         <button class="btn" id="declareWinBtn1"></button>
         <button class="btn" id="declareWinBtn2"></button>
@@ -125,6 +199,22 @@
   </div>
 </div>
 
+<!-- ── SCORE POPUP ── -->
+<div id="scoreModal" class="hidden">
+  <div class="score-modal-box">
+    <button class="modal-close" onclick="closeScoreModal()" title="Close">✕</button>
+    <p class="eyebrow" id="modalEyebrow">Live score</p>
+    <h3 id="modalTitle">Scoreboard</h3>
+    <div class="score-cards" id="modalScoreCards"></div>
+    <div class="mini-ledger" id="modalLedger"></div>
+  </div>
+</div>
+
+<!-- ── SCORE FAB (floating button, visible during game) ── -->
+<button id="scoreFab" onclick="openScoreModal()">
+  <span class="fab-icon">📊</span> Scores
+</button>
+
 <script src="common.js"></script>
 <script>
 const session = requireLogin();
@@ -134,41 +224,45 @@ const params = new URLSearchParams(window.location.search);
 const type = params.get("type"); // "400" | "tarneeb" | "likha" | "tawle"
 
 const RULES = {
-  "tarneeb": { label: "Tarneeb", threshold: 31, allowNegative: true, perPlayer: false, tarneebBidMode: true },
-  "400":     { label: "400",     threshold: 41, allowNegative: true, perPlayer: true, bidMode: true },
-  "likha":   { label: "Likha",   threshold: 101, allowNegative: false, perPlayer: true, roundSum: 36, lowestWins: true }
+  "tarneeb": { label:"Tarneeb", threshold:31, allowNegative:true, perPlayer:false, tarneebBidMode:true },
+  "400":     { label:"400",     threshold:41, allowNegative:true, perPlayer:true,  bidMode:true },
+  "likha":   { label:"Likha",   threshold:101,allowNegative:false,perPlayer:true,  roundSum:36, lowestWins:true }
 };
-
-// 400 bid -> points table (minimum bid is 2)
-const BID_POINTS = { 2: 2, 3: 3, 4: 4, 5: 10, 6: 12, 7: 14, 8: 16, 9: 27, 10: 30 };
-
-// Tarneeb bid options: 7-12 tricks, or 26 ("bid all 13")
+const BID_POINTS   = { 2:2, 3:3, 4:4, 5:10, 6:12, 7:14, 8:16, 9:27, 10:30 };
 const TARNEEB_BIDS = [7, 8, 9, 10, 11, 12, 26];
 
+// Loaded from DB
+let allUsers = []; // [{username, firstName, lastName, image, ...}]
+// Per-slot chosen data: { displayName, imageUrl }
+let slotData = [{}, {}, {}, {}];
+let tawleSlotData = [{}, {}];
+
 let state = {
-  type,
-  players: [],   // [p1, p2, p3, p4]  A: [0,1]  B: [2,3]
-  rounds: [],    // Tarneeb: [{a: n, b: n}]   400/Likha: [[n1,n2,n3,n4]]
-  totals: { a: 0, b: 0 },       // Tarneeb
-  playerTotals: [0, 0, 0, 0],   // 400/Likha
-  finished: false,
-  winningTeam: null,
-  finalScore: null
+  type, players:[], rounds:[],
+  totals:{ a:0, b:0 }, playerTotals:[0,0,0,0],
+  finished:false, winningTeam:null, finalScore:null
 };
 
 init();
 
-function init() {
+// ─────────────────────────────────────────────
+// Init
+// ─────────────────────────────────────────────
+async function init() {
   if (!type || (!RULES[type] && type !== "tawle")) {
     document.getElementById("gameTitle").textContent = "Unknown game";
     document.querySelector(".wrap").innerHTML += '<div class="panel"><p>Unknown game type. <a href="app.html">Go back</a>.</p></div>';
     return;
   }
 
+  // Load users from DB first, then build pickers
+  try { allUsers = await fetchUsers(); } catch(e) { allUsers = []; }
+
   if (type === "tawle") {
     document.getElementById("gameTitle").textContent = "Tawle";
     document.getElementById("setupPanel").style.display = "none";
     document.getElementById("tawleSetupPanel").style.display = "";
+    buildTawlePickers();
     document.getElementById("tawleStartBtn").addEventListener("click", startTawle);
     return;
   }
@@ -177,88 +271,180 @@ function init() {
   document.getElementById("gameTitle").textContent = r.label;
   document.getElementById("setupEyebrow").textContent = r.label + " setup";
   document.getElementById("scoringEyebrow").textContent = r.bidMode
-    ? `${r.label} · ends at ${r.threshold}+ · bid 2–10, points per table, fail = negative`
+    ? `${r.label} · ends at ${r.threshold}+ · bid 2–10, fail = negative`
     : r.tarneebBidMode
-    ? `${r.label} · ends at ${r.threshold}+ · bid 7-12 or 26 (all 13), success = tricks won, fail = lose bid`
+    ? `${r.label} · ends at ${r.threshold}+ · bid 7-12 or 26`
     : r.roundSum !== undefined
-    ? `${r.label} · add only · round must total ${r.roundSum} · reaching ${r.threshold}+ LOSES for that player`
-    : r.label + ` · ends at ${r.threshold}+ · ${r.allowNegative ? "+/− allowed" : "add only"}`;
+    ? `${r.label} · add only · round must total ${r.roundSum} · ${r.threshold}+ LOSES`
+    : r.label + ` · ends at ${r.threshold}+`;
+
+  buildPlayerPickers();
+  buildGuestSlotButtons();
   document.getElementById("startBtn").addEventListener("click", startGame);
   document.getElementById("addRoundBtn").addEventListener("click", addRound);
   document.getElementById("saveResultBtn").addEventListener("click", saveResult);
 }
 
-// ---------- 4-player games ----------
+// ─────────────────────────────────────────────
+// Player Pickers
+// ─────────────────────────────────────────────
+function avatarSrc(user) {
+  if (user && user.image) return user.image;
+  const name = user ? `${user.firstName||""} ${user.lastName||""}`.trim() : "?";
+  return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`;
+}
+
+function buildPickerSlot(containerId, slotIndex, dataArr, onChange) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = "";
+
+  const img = document.createElement("img");
+  img.src = avatarSrc(null);
+  img.alt = "";
+
+  const sel = document.createElement("select");
+  // Blank option
+  const blank = document.createElement("option");
+  blank.value = "";
+  blank.textContent = "— Pick a player —";
+  sel.appendChild(blank);
+
+  // One option per user
+  allUsers.forEach(u => {
+    const opt = document.createElement("option");
+    opt.value = u.username;
+    opt.textContent = `${u.firstName} ${u.lastName}`;
+    sel.appendChild(opt);
+  });
+
+  // "Guest" option
+  const guestOpt = document.createElement("option");
+  guestOpt.value = "__guest__";
+  guestOpt.textContent = "Guest / custom name…";
+  sel.appendChild(guestOpt);
+
+  sel.addEventListener("change", () => {
+    const val = sel.value;
+    if (val === "" ) {
+      dataArr[slotIndex] = {};
+      img.src = avatarSrc(null);
+    } else if (val === "__guest__") {
+      dataArr[slotIndex] = { displayName: "", imageUrl: avatarSrc(null) };
+      img.src = avatarSrc(null);
+    } else {
+      const u = allUsers.find(u => u.username === val);
+      dataArr[slotIndex] = {
+        displayName: u ? `${u.firstName} ${u.lastName}` : val,
+        imageUrl: avatarSrc(u)
+      };
+      img.src = dataArr[slotIndex].imageUrl;
+    }
+    if (onChange) onChange();
+  });
+
+  container.appendChild(img);
+  container.appendChild(sel);
+}
+
+function buildPlayerPickers() {
+  document.getElementById("playerPickersLoading").style.display = "none";
+  document.getElementById("playerPickers").style.display = "";
+  for (let i = 0; i < 4; i++) {
+    buildPickerSlot(`pick${i}`, i, slotData, null);
+  }
+}
+
+function buildTawlePickers() {
+  document.getElementById("tawlePickersLoading").style.display = "none";
+  document.getElementById("tawlePickers").style.display = "";
+  buildPickerSlot("tawlePick0", 0, tawleSlotData, null);
+  buildPickerSlot("tawlePick1", 1, tawleSlotData, null);
+}
+
+function buildGuestSlotButtons() {
+  const container = document.getElementById("guestSlotBtns");
+  container.innerHTML = "";
+  for (let i = 0; i < 4; i++) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "secondary";
+    btn.style.cssText = "font-size:.75rem; padding:5px 10px;";
+    btn.textContent = `Slot ${i+1}`;
+    btn.addEventListener("click", () => {
+      const name = document.getElementById("guestName").value.trim();
+      if (!name) return;
+      const sel = document.getElementById(`pick${i}`).querySelector("select");
+      // Set the select to guest option
+      sel.value = "__guest__";
+      slotData[i] = { displayName: name, imageUrl: avatarSrc(null) };
+      const img = document.getElementById(`pick${i}`).querySelector("img");
+      img.src = avatarSrc(null);
+    });
+    container.appendChild(btn);
+  }
+}
+
+function getDisplayName(slotIndex, dataArr) {
+  return (dataArr[slotIndex] && dataArr[slotIndex].displayName) || "";
+}
+
+// ─────────────────────────────────────────────
+// 4-player game start
+// ─────────────────────────────────────────────
 function startGame() {
   const errEl = document.getElementById("setupError");
   errEl.textContent = "";
-  const names = ["p1","p2","p3","p4"].map(id => document.getElementById(id).value.trim());
-  if (names.some(n => !n)) {
-    errEl.textContent = "Enter all 4 player names.";
-    return;
+  const names = [];
+  for (let i = 0; i < 4; i++) {
+    const sel = document.getElementById(`pick${i}`).querySelector("select");
+    const val = sel.value;
+    if (!val) { errEl.textContent = "Pick all 4 players."; return; }
+    const name = (val === "__guest__") ? slotData[i].displayName : slotData[i].displayName;
+    if (!name) { errEl.textContent = `Set a name for slot ${i+1}.`; return; }
+    names.push(name);
   }
-  state.players = names;
+  // Deduplicate check
+  if (new Set(names).size < 4) { errEl.textContent = "Each player must be different."; return; }
 
+  state.players = names;
   document.getElementById("setupPanel").style.display = "none";
   document.getElementById("scoringPanel").style.display = "";
-
   document.getElementById("scoringHeading").textContent = `${names[0]}/${names[1]} vs ${names[2]}/${names[3]}`;
-
+  document.getElementById("scoreFab").style.display = "flex";
   buildLedgerHeader();
   buildRoundInputs();
   renderLedger();
 }
 
+// ─────────────────────────────────────────────
+// Ledger header
+// ─────────────────────────────────────────────
 function buildLedgerHeader() {
   const r = RULES[type];
   const names = state.players;
   const headRow = document.getElementById("ledgerHeadRow");
   const totalRow = document.getElementById("ledgerTotalRow");
-
-  // clear existing extra cells (keep first th/td)
   while (headRow.children.length > 1) headRow.removeChild(headRow.lastChild);
   while (totalRow.children.length > 1) totalRow.removeChild(totalRow.lastChild);
 
   if (r.perPlayer) {
     names.forEach((name, i) => {
-      const th = document.createElement("th");
-      th.textContent = name;
-      headRow.appendChild(th);
-
-      const td = document.createElement("td");
-      td.id = `total-p${i}`;
-      td.textContent = "0";
-      totalRow.appendChild(td);
+      const th = document.createElement("th"); th.textContent = name; headRow.appendChild(th);
+      const td = document.createElement("td"); td.id = `total-p${i}`; td.textContent = "0"; totalRow.appendChild(td);
     });
   } else {
-    const thA = document.createElement("th");
-    thA.textContent = `${names[0]} & ${names[1]}`;
-    headRow.appendChild(thA);
-
-    const thB = document.createElement("th");
-    thB.textContent = `${names[2]} & ${names[3]}`;
-    headRow.appendChild(thB);
-
-    const tdA = document.createElement("td");
-    tdA.id = "totalA";
-    tdA.textContent = "0";
-    totalRow.appendChild(tdA);
-
-    const tdB = document.createElement("td");
-    tdB.id = "totalB";
-    tdB.textContent = "0";
-    totalRow.appendChild(tdB);
+    const thA = document.createElement("th"); thA.textContent = `${names[0]} & ${names[1]}`; headRow.appendChild(thA);
+    const thB = document.createElement("th"); thB.textContent = `${names[2]} & ${names[3]}`; headRow.appendChild(thB);
+    const tdA = document.createElement("td"); tdA.id = "totalA"; tdA.textContent = "0"; totalRow.appendChild(tdA);
+    const tdB = document.createElement("td"); tdB.id = "totalB"; tdB.textContent = "0"; totalRow.appendChild(tdB);
   }
-
-  // Empty trailing header/total cell for the per-row actions column
-  const thActions = document.createElement("th");
-  thActions.style.width = "70px";
-  headRow.appendChild(thActions);
-
-  const tdActions = document.createElement("td");
-  totalRow.appendChild(tdActions);
+  const thAct = document.createElement("th"); thAct.style.width = "70px"; headRow.appendChild(thAct);
+  const tdAct = document.createElement("td"); totalRow.appendChild(tdAct);
 }
 
+// ─────────────────────────────────────────────
+// Round inputs
+// ─────────────────────────────────────────────
 function buildRoundInputs() {
   const r = RULES[type];
   const names = state.players;
@@ -268,126 +454,67 @@ function buildRoundInputs() {
   if (r.tarneebBidMode) {
     row.classList.remove("cols-4");
     row.style.gridTemplateColumns = "1fr 1fr 1fr";
+    const bidOptions = TARNEEB_BIDS.map(b => `<option value="${b}">${b === 26 ? "26 (all 13)" : b}</option>`).join("");
 
-    const bidOptions = TARNEEB_BIDS.map(b =>
-      `<option value="${b}">${b === 26 ? "26 (all 13)" : b}</option>`
-    ).join("");
+    const teamDiv = document.createElement("div"); teamDiv.className = "field";
+    teamDiv.innerHTML = `<label for="bidTeam">Bidding team</label><select id="bidTeam"><option value="a">${names[0]} & ${names[1]}</option><option value="b">${names[2]} & ${names[3]}</option></select>`;
 
-    const teamDiv = document.createElement("div");
-    teamDiv.className = "field";
-    teamDiv.innerHTML = `
-      <label for="bidTeam">Bidding team</label>
-      <select id="bidTeam">
-        <option value="a">${names[0]} & ${names[1]}</option>
-        <option value="b">${names[2]} & ${names[3]}</option>
-      </select>
-    `;
+    const bidDiv = document.createElement("div"); bidDiv.className = "field";
+    bidDiv.innerHTML = `<label for="tarneebBid">Bid</label><select id="tarneebBid">${bidOptions}</select>`;
 
-    const bidDiv = document.createElement("div");
-    bidDiv.className = "field";
-    bidDiv.innerHTML = `
-      <label for="tarneebBid">Bid</label>
-      <select id="tarneebBid">${bidOptions}</select>
-    `;
+    const tricksDiv = document.createElement("div"); tricksDiv.className = "field";
+    tricksDiv.innerHTML = `<label for="tricksWon">Tricks won by bidder</label><input type="number" id="tricksWon" inputmode="numeric" placeholder="0" min="0" max="13">`;
 
-    const tricksDiv = document.createElement("div");
-    tricksDiv.className = "field";
-    tricksDiv.innerHTML = `
-      <label for="tricksWon">Tricks won by bidder</label>
-      <input type="number" id="tricksWon" inputmode="numeric" placeholder="0" min="0" max="13">
-    `;
-
-    row.appendChild(teamDiv);
-    row.appendChild(bidDiv);
-    row.appendChild(tricksDiv);
+    row.appendChild(teamDiv); row.appendChild(bidDiv); row.appendChild(tricksDiv);
   } else if (r.bidMode) {
     row.classList.add("cols-4");
     names.forEach((name, i) => {
-      const div = document.createElement("div");
-      div.className = "field";
-      const options = Object.keys(BID_POINTS).map(b =>
-        `<option value="${b}">${b} (${BID_POINTS[b]} pts)</option>`
-      ).join("");
+      const div = document.createElement("div"); div.className = "field";
+      const options = Object.keys(BID_POINTS).map(b => `<option value="${b}">${b} (${BID_POINTS[b]} pts)</option>`).join("");
       div.innerHTML = `
         <label for="bid-p${i}">${name}</label>
-        <select id="bid-p${i}">
-          <option value="0">No bid</option>
-          ${options}
-        </select>
-        <div style="display:flex; gap:6px; margin-top:6px;">
-          <label style="margin:0; display:flex; align-items:center; gap:4px; font-size:0.78rem;">
-            <input type="radio" name="result-p${i}" value="made" checked style="width:auto;"> Made
-          </label>
-          <label style="margin:0; display:flex; align-items:center; gap:4px; font-size:0.78rem;">
-            <input type="radio" name="result-p${i}" value="failed" style="width:auto;"> Failed
-          </label>
-        </div>
-      `;
+        <select id="bid-p${i}"><option value="0">No bid</option>${options}</select>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <label style="margin:0;display:flex;align-items:center;gap:4px;font-size:.78rem;"><input type="radio" name="result-p${i}" value="made" checked style="width:auto;"> Made</label>
+          <label style="margin:0;display:flex;align-items:center;gap:4px;font-size:.78rem;"><input type="radio" name="result-p${i}" value="failed" style="width:auto;"> Failed</label>
+        </div>`;
       row.appendChild(div);
     });
   } else if (r.perPlayer) {
     row.classList.add("cols-4");
     names.forEach((name, i) => {
-      const div = document.createElement("div");
-      div.className = "field";
-      div.innerHTML = `
-        <label for="round-p${i}">${name}</label>
-        <input type="number" id="round-p${i}" inputmode="numeric" placeholder="0" ${r.allowNegative ? "" : 'min="0"'}>
-      `;
+      const div = document.createElement("div"); div.className = "field";
+      div.innerHTML = `<label for="round-p${i}">${name}</label><input type="number" id="round-p${i}" inputmode="numeric" placeholder="0" ${r.allowNegative ? "" : 'min="0"'}>`;
       row.appendChild(div);
     });
   } else {
     row.classList.remove("cols-4");
-    const divA = document.createElement("div");
-    divA.className = "field";
-    divA.innerHTML = `
-      <label for="roundA">${names[0]} & ${names[1]} score</label>
-      <input type="number" id="roundA" inputmode="numeric" placeholder="0">
-    `;
-    const divB = document.createElement("div");
-    divB.className = "field";
-    divB.innerHTML = `
-      <label for="roundB">${names[2]} & ${names[3]} score</label>
-      <input type="number" id="roundB" inputmode="numeric" placeholder="0">
-    `;
-    row.appendChild(divA);
-    row.appendChild(divB);
+    const divA = document.createElement("div"); divA.className = "field";
+    divA.innerHTML = `<label for="roundA">${names[0]} & ${names[1]} score</label><input type="number" id="roundA" inputmode="numeric" placeholder="0">`;
+    const divB = document.createElement("div"); divB.className = "field";
+    divB.innerHTML = `<label for="roundB">${names[2]} & ${names[3]} score</label><input type="number" id="roundB" inputmode="numeric" placeholder="0">`;
+    row.appendChild(divA); row.appendChild(divB);
   }
 }
 
-// Reads the current round-input fields and returns a round entry for the
-// active game type, or null (with errEl set) if invalid. Does NOT clear
-// inputs or mutate state — callers decide what to do with the result.
 function buildRoundFromInputs(errEl) {
   const r = RULES[type];
   errEl.textContent = "";
 
   if (r.tarneebBidMode) {
-    const bidTeam = document.getElementById("bidTeam").value; // "a" or "b"
+    const bidTeam = document.getElementById("bidTeam").value;
     const bid = Number(document.getElementById("tarneebBid").value);
     const tricksRaw = document.getElementById("tricksWon").value;
     const tricksWon = tricksRaw === "" ? NaN : Number(tricksRaw);
-
     if (Number.isNaN(tricksWon) || tricksWon < 0 || tricksWon > 13) {
-      errEl.textContent = "Enter tricks won by the bidding team (0-13).";
-      return null;
+      errEl.textContent = "Enter tricks won by the bidding team (0-13)."; return null;
     }
-
-    const requiredTricks = bid === 26 ? 13 : bid;
-    const success = tricksWon >= requiredTricks;
-
+    const success = tricksWon >= (bid === 26 ? 13 : bid);
     let bidderScore, opponentScore;
-    if (success) {
-      bidderScore = (bid === 26) ? 26 : tricksWon;
-      opponentScore = 0;
-    } else {
-      bidderScore = -bid;
-      opponentScore = 13 - tricksWon;
-    }
-
+    if (success) { bidderScore = bid === 26 ? 26 : tricksWon; opponentScore = 0; }
+    else { bidderScore = -bid; opponentScore = 13 - tricksWon; }
     const a = bidTeam === "a" ? bidderScore : opponentScore;
     const b = bidTeam === "a" ? opponentScore : bidderScore;
-
     return { a, b, bidTeam, bid, tricksWon, success };
   }
 
@@ -397,10 +524,7 @@ function buildRoundFromInputs(errEl) {
       const bid = Number(document.getElementById(`bid-p${i}`).value);
       const result = document.querySelector(`input[name="result-p${i}"]:checked`).value;
       let pts = 0;
-      if (bid > 0) {
-        pts = BID_POINTS[bid];
-        if (result === "failed") pts = -pts;
-      }
+      if (bid > 0) { pts = BID_POINTS[bid]; if (result === "failed") pts = -pts; }
       values.push(pts);
     }
     return values;
@@ -411,45 +535,26 @@ function buildRoundFromInputs(errEl) {
     for (let i = 0; i < 4; i++) {
       const raw = document.getElementById(`round-p${i}`).value;
       const v = raw === "" ? 0 : Number(raw);
-      if (Number.isNaN(v)) {
-        errEl.textContent = "Enter valid numbers.";
-        return null;
-      }
-      if (!r.allowNegative && v < 0) {
-        errEl.textContent = `${r.label} only allows positive (add) scores.`;
-        return null;
-      }
+      if (Number.isNaN(v)) { errEl.textContent = "Enter valid numbers."; return null; }
+      if (!r.allowNegative && v < 0) { errEl.textContent = `${r.label} only allows positive scores.`; return null; }
       values.push(v);
     }
-
     if (r.roundSum !== undefined) {
-      const sum = values.reduce((s, v) => s + v, 0);
-      if (sum !== r.roundSum) {
-        errEl.textContent = `Round total must equal ${r.roundSum} (currently ${sum}).`;
-        return null;
-      }
+      const sum = values.reduce((s,v) => s+v, 0);
+      if (sum !== r.roundSum) { errEl.textContent = `Round total must equal ${r.roundSum} (currently ${sum}).`; return null; }
     }
     return values;
   }
 
-  // Plain team-score mode (currently unused, kept as fallback)
   const aRaw = document.getElementById("roundA").value;
   const bRaw = document.getElementById("roundB").value;
   const a = aRaw === "" ? 0 : Number(aRaw);
   const b = bRaw === "" ? 0 : Number(bRaw);
-
-  if (Number.isNaN(a) || Number.isNaN(b)) {
-    errEl.textContent = "Enter valid numbers.";
-    return null;
-  }
-  if (!r.allowNegative && (a < 0 || b < 0)) {
-    errEl.textContent = `${r.label} only allows positive (add) scores.`;
-    return null;
-  }
+  if (Number.isNaN(a) || Number.isNaN(b)) { errEl.textContent = "Enter valid numbers."; return null; }
+  if (!r.allowNegative && (a < 0 || b < 0)) { errEl.textContent = `${r.label} only allows positive scores.`; return null; }
   return { a, b };
 }
 
-// Clears the round-input fields back to their defaults.
 function clearRoundInputs() {
   const r = RULES[type];
   if (r.tarneebBidMode) {
@@ -467,7 +572,6 @@ function clearRoundInputs() {
   }
 }
 
-// Populates the round-input fields from an existing round entry, for editing.
 function fillRoundInputs(rnd) {
   const r = RULES[type];
   if (r.tarneebBidMode) {
@@ -475,16 +579,11 @@ function fillRoundInputs(rnd) {
     document.getElementById("tarneebBid").value = rnd.bid;
     document.getElementById("tricksWon").value = rnd.tricksWon;
   } else if (r.bidMode) {
-    // rnd is [pts0, pts1, pts2, pts3] — we can't recover the exact bid that
-    // produced a given point value unambiguously when 0, so default to "no
-    // bid"/made and let the user re-pick if it was a real bid.
     for (let i = 0; i < 4; i++) {
-      const pts = rnd[i];
-      const abs = Math.abs(pts);
+      const pts = rnd[i]; const abs = Math.abs(pts);
       const matchingBid = Object.keys(BID_POINTS).find(b => BID_POINTS[b] === abs);
       document.getElementById(`bid-p${i}`).value = matchingBid || "0";
-      const resultVal = pts < 0 ? "failed" : "made";
-      document.querySelector(`input[name="result-p${i}"][value="${resultVal}"]`).checked = true;
+      document.querySelector(`input[name="result-p${i}"][value="${pts < 0 ? "failed" : "made"}"]`).checked = true;
     }
   } else if (r.perPlayer) {
     for (let i = 0; i < 4; i++) document.getElementById(`round-p${i}`).value = rnd[i];
@@ -494,49 +593,35 @@ function fillRoundInputs(rnd) {
   }
 }
 
-// Recomputes totals/playerTotals from scratch based on state.rounds.
 function recalcTotals() {
   const r = RULES[type];
   if (r.perPlayer) {
-    state.playerTotals = [0, 0, 0, 0];
-    state.rounds.forEach(rnd => {
-      rnd.forEach((v, i) => state.playerTotals[i] += v);
-    });
+    state.playerTotals = [0,0,0,0];
+    state.rounds.forEach(rnd => rnd.forEach((v,i) => state.playerTotals[i] += v));
   } else {
-    state.totals = { a: 0, b: 0 };
-    state.rounds.forEach(rnd => {
-      state.totals.a += rnd.a;
-      state.totals.b += rnd.b;
-    });
+    state.totals = { a:0, b:0 };
+    state.rounds.forEach(rnd => { state.totals.a += rnd.a; state.totals.b += rnd.b; });
   }
 }
 
-let editingIndex = null; // round index currently being edited, or null
+let editingIndex = null;
 
 function addRound() {
   if (state.finished) return;
   const errEl = document.getElementById("roundError");
-
   const result = buildRoundFromInputs(errEl);
   if (result === null) return;
 
   if (editingIndex !== null) {
-    // Save edit to existing round
     state.rounds[editingIndex] = result;
     recalcTotals();
     exitEditMode();
   } else {
-    // Append new round
     state.rounds.push(result);
     const r = RULES[type];
-    if (r.perPlayer) {
-      result.forEach((v, i) => state.playerTotals[i] += v);
-    } else {
-      state.totals.a += result.a;
-      state.totals.b += result.b;
-    }
+    if (r.perPlayer) { result.forEach((v,i) => state.playerTotals[i] += v); }
+    else { state.totals.a += result.a; state.totals.b += result.b; }
   }
-
   clearRoundInputs();
   renderLedger();
   checkGameEnd();
@@ -549,7 +634,7 @@ function startEditRound(index) {
   document.getElementById("addRoundBtn").textContent = `Save round ${index + 1}`;
   document.getElementById("cancelEditBtn").style.display = "";
   document.getElementById("roundError").textContent = "";
-  document.getElementById("roundInputRow").scrollIntoView({ behavior: "smooth", block: "center" });
+  document.getElementById("roundInputRow").scrollIntoView({ behavior:"smooth", block:"center" });
 }
 
 function exitEditMode() {
@@ -567,58 +652,38 @@ function cancelEdit() {
 function deleteRound(index) {
   if (state.finished) return;
   if (!confirm(`Delete round ${index + 1}? This can't be undone.`)) return;
-
   state.rounds.splice(index, 1);
   recalcTotals();
-  if (editingIndex === index) {
-    cancelEdit();
-  } else if (editingIndex !== null && editingIndex > index) {
-    editingIndex -= 1; // shift to stay pointed at the same round
-  }
+  if (editingIndex === index) cancelEdit();
+  else if (editingIndex !== null && editingIndex > index) editingIndex -= 1;
   renderLedger();
 }
 
 function renderLedger() {
   const r = RULES[type];
-  const body = document.getElementById("ledgerBody");
   const canEdit = !state.finished;
-
   const actionsCell = (i) => canEdit ? `
     <td style="white-space:nowrap;">
-      <button type="button" class="row-action" onclick="startEditRound(${i})" title="Edit round" style="background:none; border:none; padding:4px; cursor:pointer; font-size:0.95rem;">✏️</button>
-      <button type="button" class="row-action" onclick="deleteRound(${i})" title="Delete round" style="background:none; border:none; padding:4px; cursor:pointer; font-size:0.95rem;">🗑️</button>
-    </td>
-  ` : "";
+      <button type="button" class="row-action" onclick="startEditRound(${i})" title="Edit" style="background:none;border:none;padding:4px;cursor:pointer;font-size:.95rem;">✏️</button>
+      <button type="button" class="row-action" onclick="deleteRound(${i})" title="Delete" style="background:none;border:none;padding:4px;cursor:pointer;font-size:.95rem;">🗑️</button>
+    </td>` : "";
 
-  if (r.perPlayer) {
-    body.innerHTML = state.rounds.map((rnd, i) => `
-      <tr>
-        <td class="row-num">${i + 1}</td>
-        ${rnd.map(v => `<td>${v > 0 ? "+" : ""}${v}</td>`).join("")}
-        ${actionsCell(i)}
-      </tr>
-    `).join("");
-    state.playerTotals.forEach((v, i) => {
-      document.getElementById(`total-p${i}`).textContent = v;
-    });
+  if (RULES[type].perPlayer) {
+    document.getElementById("ledgerBody").innerHTML = state.rounds.map((rnd,i) => `
+      <tr><td class="row-num">${i+1}</td>${rnd.map(v=>`<td>${v>0?"+":""}${v}</td>`).join("")}${actionsCell(i)}</tr>`).join("");
+    state.playerTotals.forEach((v,i) => { document.getElementById(`total-p${i}`).textContent = v; });
   } else {
-    body.innerHTML = state.rounds.map((rnd, i) => {
+    document.getElementById("ledgerBody").innerHTML = state.rounds.map((rnd,i) => {
       let note = "";
       if (rnd.bidTeam) {
         const bidLabel = rnd.bid === 26 ? "26 (all 13)" : rnd.bid;
         const teamName = rnd.bidTeam === "a" ? "Team A" : "Team B";
-        note = `<div style="font-size:0.7rem; opacity:0.6; margin-top:2px;">
-          ${teamName} bid ${bidLabel}, won ${rnd.tricksWon} — ${rnd.success ? "made" : "failed"}
-        </div>`;
+        note = `<div style="font-size:.7rem;opacity:.6;margin-top:2px;">${teamName} bid ${bidLabel}, won ${rnd.tricksWon} — ${rnd.success?"made":"failed"}</div>`;
       }
-      return `
-        <tr>
-          <td class="row-num">${i + 1}</td>
-          <td>${rnd.a > 0 ? "+" : ""}${rnd.a}${rnd.bidTeam === "a" ? note : ""}</td>
-          <td>${rnd.b > 0 ? "+" : ""}${rnd.b}${rnd.bidTeam === "b" ? note : ""}</td>
-          ${actionsCell(i)}
-        </tr>
-      `;
+      return `<tr><td class="row-num">${i+1}</td>
+        <td>${rnd.a>0?"+":""}${rnd.a}${rnd.bidTeam==="a"?note:""}</td>
+        <td>${rnd.b>0?"+":""}${rnd.b}${rnd.bidTeam==="b"?note:""}</td>
+        ${actionsCell(i)}</tr>`;
     }).join("");
     document.getElementById("totalA").textContent = state.totals.a;
     document.getElementById("totalB").textContent = state.totals.b;
@@ -630,89 +695,61 @@ function checkGameEnd() {
   const names = state.players;
 
   if (r.perPlayer) {
-    // Team A = players 0,1 ; Team B = players 2,3
-    // A team crosses the threshold as soon as EITHER of its players individually reaches it.
     const teamACrossed = state.playerTotals[0] >= r.threshold || state.playerTotals[1] >= r.threshold;
     const teamBCrossed = state.playerTotals[2] >= r.threshold || state.playerTotals[3] >= r.threshold;
-
     if (!teamACrossed && !teamBCrossed) return;
-
-    let winningTeam; // the team that comes out on top, regardless of how
-
+    let winningTeam;
     if (r.lowestWins) {
-      // Crossing the threshold means that team LOSES. The other team wins.
       if (teamACrossed && teamBCrossed) {
-        // Both crossed in the same round — the team with the lower max score "loses less", so it wins.
         const aBest = Math.max(state.playerTotals[0], state.playerTotals[1]);
         const bBest = Math.max(state.playerTotals[2], state.playerTotals[3]);
-        if (aBest === bBest) return; // tie: keep playing
-        winningTeam = aBest < bBest ? 0 : 1; // lower score wins
-      } else {
-        winningTeam = teamACrossed ? 1 : 0; // the team that crossed loses, so the OTHER team wins
-      }
+        if (aBest === bBest) return;
+        winningTeam = aBest < bBest ? 0 : 1;
+      } else { winningTeam = teamACrossed ? 1 : 0; }
     } else {
-      // Crossing the threshold means that team WINS (e.g. 400).
       if (teamACrossed && teamBCrossed) {
         const aBest = Math.max(state.playerTotals[0], state.playerTotals[1]);
         const bBest = Math.max(state.playerTotals[2], state.playerTotals[3]);
-        if (aBest === bBest) return; // tie: keep playing
+        if (aBest === bBest) return;
         winningTeam = aBest > bBest ? 0 : 1;
-      } else {
-        winningTeam = teamACrossed ? 0 : 1;
-      }
+      } else { winningTeam = teamACrossed ? 0 : 1; }
     }
-
     state.finished = true;
-    const winners = winningTeam === 0 ? [names[0], names[1]] : [names[2], names[3]];
-    const winnerIdxs = winningTeam === 0 ? [0, 1] : [2, 3];
+    const winners = winningTeam === 0 ? [names[0],names[1]] : [names[2],names[3]];
+    const winnerIdxs = winningTeam === 0 ? [0,1] : [2,3];
     const finalScore = r.lowestWins
       ? Math.min(state.playerTotals[winnerIdxs[0]], state.playerTotals[winnerIdxs[1]])
       : Math.max(state.playerTotals[winnerIdxs[0]], state.playerTotals[winnerIdxs[1]]);
-    state.winningTeam = winners;
-    state.finalScore = finalScore;
-
-    disableInputs();
-    renderLedger();
-
-    const reachedNote = r.lowestWins
-      ? `opponents reached ${r.threshold}+`
-      : `reached ${r.threshold}+`;
-
-    document.getElementById("winnerText").textContent = `${winners.join(" & ")} win!`;
-    document.getElementById("winnerSub").textContent =
-      `${names.map((n, i) => `${n}: ${state.playerTotals[i]}`).join(" · ")} (${reachedNote})`;
-    document.getElementById("winnerBanner").style.display = "";
-    launchFireworks();
-
+    state.winningTeam = winners; state.finalScore = finalScore;
+    const reachedNote = r.lowestWins ? `opponents reached ${r.threshold}+` : `reached ${r.threshold}+`;
+    showWinner(`${winners.join(" & ")} win!`,
+      `${names.map((n,i)=>`${n}: ${state.playerTotals[i]}`).join(" · ")} (${reachedNote})`);
   } else {
     const aWins = state.totals.a >= r.threshold;
     const bWins = state.totals.b >= r.threshold;
-
     if (!aWins && !bWins) return;
-
     let winningTeam;
     if (aWins && bWins) {
-      if (state.totals.a === state.totals.b) return; // tie: keep playing
+      if (state.totals.a === state.totals.b) return;
       winningTeam = state.totals.a > state.totals.b ? 0 : 1;
-    } else {
-      winningTeam = aWins ? 0 : 1;
-    }
-
+    } else { winningTeam = aWins ? 0 : 1; }
     state.finished = true;
-    const winners = winningTeam === 0 ? [names[0], names[1]] : [names[2], names[3]];
-    const score = winningTeam === 0 ? state.totals.a : state.totals.b;
+    const winners = winningTeam === 0 ? [names[0],names[1]] : [names[2],names[3]];
     state.winningTeam = winners;
-    state.finalScore = score;
-
-    disableInputs();
-    renderLedger();
-
-    document.getElementById("winnerText").textContent = `${winners.join(" & ")} win!`;
-    document.getElementById("winnerSub").textContent =
-      `Final score ${state.totals.a} – ${state.totals.b} (reached ${r.threshold}+)`;
-    document.getElementById("winnerBanner").style.display = "";
-    launchFireworks();
+    state.finalScore = winningTeam === 0 ? state.totals.a : state.totals.b;
+    showWinner(`${winners.join(" & ")} win!`,
+      `Final score ${state.totals.a} – ${state.totals.b} (reached ${r.threshold}+)`);
   }
+}
+
+function showWinner(text, sub) {
+  disableInputs();
+  renderLedger();
+  document.getElementById("winnerText").textContent = text;
+  document.getElementById("winnerSub").textContent = sub;
+  document.getElementById("winnerBanner").style.display = "";
+  document.getElementById("scoreFab").style.display = "none";
+  launchFireworks();
 }
 
 function disableInputs() {
@@ -724,212 +761,224 @@ function disableInputs() {
 async function saveResult() {
   const btn = document.getElementById("saveResultBtn");
   const errEl = document.getElementById("saveError");
-  errEl.textContent = "";
-  btn.disabled = true;
-  btn.textContent = "Saving…";
-
+  errEl.textContent = ""; btn.disabled = true; btn.textContent = "Saving…";
   const r = RULES[type];
   const record = {
-    type,
-    date: new Date().toISOString(),
-    players: state.players,
-    teams: [[state.players[0], state.players[1]], [state.players[2], state.players[3]]],
-    rounds: state.rounds,
-    totals: r.perPlayer ? state.playerTotals : state.totals,
-    winningTeam: state.winningTeam,
-    finalScore: state.finalScore,
-    recordedBy: session.username
+    type, date:new Date().toISOString(), players:state.players,
+    teams:[[state.players[0],state.players[1]],[state.players[2],state.players[3]]],
+    rounds:state.rounds,
+    totals:r.perPlayer ? state.playerTotals : state.totals,
+    winningTeam:state.winningTeam, finalScore:state.finalScore,
+    recordedBy:session.username
   };
-
   try {
     await appendGameToHistory(record);
     btn.textContent = "Saved ✓";
-  } catch (e) {
-    errEl.textContent = e.message;
-    btn.disabled = false;
-    btn.textContent = "Save to history";
+  } catch(e) {
+    errEl.textContent = e.message; btn.disabled = false; btn.textContent = "Save to history";
   }
 }
 
-// ---------- Tawle ----------
-let tawlePlayers = ["", ""];
+// ─────────────────────────────────────────────
+// Score Modal (popup mid-game)
+// ─────────────────────────────────────────────
+function openScoreModal() {
+  const r = RULES[type];
+  const names = state.players;
+  if (!names.length) return;
+
+  document.getElementById("modalEyebrow").textContent = `${r ? r.label : type} · Round ${state.rounds.length}`;
+  document.getElementById("modalTitle").textContent = `${names[0]}/${names[1]} vs ${names[2]}/${names[3]}`;
+
+  // Score cards
+  const cardsEl = document.getElementById("modalScoreCards");
+  cardsEl.innerHTML = "";
+
+  const makeCard = (label, score, threshold, isWinning, playerNames, avatarUrls) => {
+    const card = document.createElement("div");
+    card.className = "score-card" + (isWinning ? " winning" : "");
+    const avHtml = (avatarUrls||[]).map(u => `<img src="${u}" alt="">`).join("");
+    card.innerHTML = `
+      <div class="sc-avatars">${avHtml}</div>
+      <div class="sc-names">${label}</div>
+      <div class="sc-score">${score}</div>
+      <div class="sc-label">Target: ${threshold}+</div>`;
+    return card;
+  };
+
+  // Get avatar URLs for the slot data (matched by display name)
+  const getAvatarForName = (name) => {
+    const u = allUsers.find(u => `${u.firstName} ${u.lastName}`.trim() === name || u.firstName === name);
+    return avatarSrc(u || null);
+  };
+
+  if (r && r.perPlayer) {
+    const scoreA = `${state.playerTotals[0]} / ${state.playerTotals[1]}`;
+    const scoreB = `${state.playerTotals[2]} / ${state.playerTotals[3]}`;
+    const aMax = Math.max(state.playerTotals[0], state.playerTotals[1]);
+    const bMax = Math.max(state.playerTotals[2], state.playerTotals[3]);
+    const aWinning = r.lowestWins ? aMax < bMax : aMax > bMax;
+    cardsEl.appendChild(makeCard(`${names[0]} & ${names[1]}`, scoreA, r.threshold, aWinning,
+      [names[0],names[1]], [getAvatarForName(names[0]), getAvatarForName(names[1])]));
+    cardsEl.appendChild(makeCard(`${names[2]} & ${names[3]}`, scoreB, r.threshold, !aWinning,
+      [names[2],names[3]], [getAvatarForName(names[2]), getAvatarForName(names[3])]));
+  } else if (r) {
+    const aWinning = state.totals.a > state.totals.b;
+    cardsEl.appendChild(makeCard(`${names[0]} & ${names[1]}`, state.totals.a, r.threshold, aWinning,
+      [names[0],names[1]], [getAvatarForName(names[0]), getAvatarForName(names[1])]));
+    cardsEl.appendChild(makeCard(`${names[2]} & ${names[3]}`, state.totals.b, r.threshold, !aWinning,
+      [names[2],names[3]], [getAvatarForName(names[2]), getAvatarForName(names[3])]));
+  }
+
+  // Mini ledger
+  const ledgerEl = document.getElementById("modalLedger");
+  if (state.rounds.length === 0) {
+    ledgerEl.innerHTML = "<p style='opacity:.5;font-size:.82rem;text-align:center;margin:8px 0 0'>No rounds yet.</p>";
+  } else {
+    const isPerPlayer = r && r.perPlayer;
+    const headers = isPerPlayer
+      ? `<th>#</th>${names.map(n=>`<th>${n.split(" ")[0]}</th>`).join("")}`
+      : `<th>#</th><th>${names[0].split(" ")[0]}/${names[1].split(" ")[0]}</th><th>${names[2].split(" ")[0]}/${names[3].split(" ")[0]}</th>`;
+    const rows = state.rounds.map((rnd, i) => {
+      if (isPerPlayer) {
+        return `<tr><td class="rd">${i+1}</td>${rnd.map(v=>`<td>${v>0?"+":""}${v}</td>`).join("")}</tr>`;
+      } else {
+        return `<tr><td class="rd">${i+1}</td><td>${rnd.a>0?"+":""}${rnd.a}</td><td>${rnd.b>0?"+":""}${rnd.b}</td></tr>`;
+      }
+    }).join("");
+    const totRow = isPerPlayer
+      ? `<tr class="tot-row"><td>Σ</td>${state.playerTotals.map(v=>`<td>${v}</td>`).join("")}</tr>`
+      : `<tr class="tot-row"><td>Σ</td><td>${state.totals.a}</td><td>${state.totals.b}</td></tr>`;
+    ledgerEl.innerHTML = `<table><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody><tfoot>${totRow}</tfoot></table>`;
+  }
+
+  document.getElementById("scoreModal").classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+}
+
+function closeScoreModal() {
+  document.getElementById("scoreModal").classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
+// Close on backdrop click
+document.getElementById("scoreModal").addEventListener("click", (e) => {
+  if (e.target === document.getElementById("scoreModal")) closeScoreModal();
+});
+
+// ─────────────────────────────────────────────
+// Tawle
+// ─────────────────────────────────────────────
+let tawlePlayers = ["",""];
 
 function startTawle() {
   const errEl = document.getElementById("tawleSetupError");
-  const p1 = document.getElementById("tawleP1").value.trim();
-  const p2 = document.getElementById("tawleP2").value.trim();
-  if (!p1 || !p2) {
-    errEl.textContent = "Enter both player names.";
-    return;
-  }
-  tawlePlayers = [p1, p2];
+  const names = [0,1].map(i => {
+    const sel = document.getElementById(`tawlePick${i}`).querySelector("select");
+    const val = sel.value;
+    if (!val) return "";
+    return tawleSlotData[i].displayName || "";
+  });
+  if (!names[0] || !names[1]) { errEl.textContent = "Pick both players."; return; }
+  if (names[0] === names[1]) { errEl.textContent = "Players must be different."; return; }
+  tawlePlayers = names;
   document.getElementById("tawleSetupPanel").style.display = "none";
   document.getElementById("tawlePanel").style.display = "";
-  document.getElementById("tawleHeading").textContent = `${p1} vs ${p2}`;
+  document.getElementById("tawleHeading").textContent = `${names[0]} vs ${names[1]}`;
   buildDice();
-
   document.getElementById("rollBtn").addEventListener("click", rollDice);
-  document.getElementById("declareWinBtn1").textContent = `${p1} wins`;
-  document.getElementById("declareWinBtn2").textContent = `${p2} wins`;
-  document.getElementById("declareWinBtn1").addEventListener("click", () => declareTawleWin(p1));
-  document.getElementById("declareWinBtn2").addEventListener("click", () => declareTawleWin(p2));
+  document.getElementById("declareWinBtn1").textContent = `${names[0]} wins`;
+  document.getElementById("declareWinBtn2").textContent = `${names[1]} wins`;
+  document.getElementById("declareWinBtn1").addEventListener("click", () => declareTawleWin(names[0]));
+  document.getElementById("declareWinBtn2").addEventListener("click", () => declareTawleWin(names[1]));
 }
 
-const PIP_LAYOUTS = {
-  1: [4],
-  2: [0, 8],
-  3: [0, 4, 8],
-  4: [0, 2, 6, 8],
-  5: [0, 2, 4, 6, 8],
-  6: [0, 2, 3, 5, 6, 8]
-};
+const PIP_LAYOUTS = { 1:[4], 2:[0,8], 3:[0,4,8], 4:[0,2,6,8], 5:[0,2,4,6,8], 6:[0,2,3,5,6,8] };
 
 function buildDice() {
-  ["die1", "die2"].forEach(id => {
+  ["die1","die2"].forEach(id => {
     const die = document.getElementById(id);
     die.innerHTML = "";
-    for (let i = 0; i < 9; i++) {
-      const pip = document.createElement("div");
-      pip.className = "pip";
-      die.appendChild(pip);
-    }
+    for (let i = 0; i < 9; i++) { const pip = document.createElement("div"); pip.className = "pip"; die.appendChild(pip); }
   });
-  setDieValue("die1", 1);
-  setDieValue("die2", 1);
+  setDieValue("die1",1); setDieValue("die2",1);
 }
 
 function setDieValue(id, value) {
-  const die = document.getElementById(id);
-  const pips = die.querySelectorAll(".pip");
+  const pips = document.getElementById(id).querySelectorAll(".pip");
   pips.forEach(p => p.classList.remove("on"));
   PIP_LAYOUTS[value].forEach(idx => pips[idx].classList.add("on"));
 }
 
 function rollDice() {
-  const d1 = document.getElementById("die1");
-  const d2 = document.getElementById("die2");
-  d1.classList.add("rolling");
-  d2.classList.add("rolling");
-
-  const v1 = 1 + Math.floor(Math.random() * 6);
-  const v2 = 1 + Math.floor(Math.random() * 6);
-
+  const d1 = document.getElementById("die1"), d2 = document.getElementById("die2");
+  d1.classList.add("rolling"); d2.classList.add("rolling");
+  const v1 = 1 + Math.floor(Math.random()*6), v2 = 1 + Math.floor(Math.random()*6);
   setTimeout(() => {
-    setDieValue("die1", v1);
-    setDieValue("die2", v2);
-    d1.classList.remove("rolling");
-    d2.classList.remove("rolling");
-
-    document.getElementById("diceSum").textContent = `${v1} + ${v2} = ${v1 + v2}`;
-    document.getElementById("diceDouble").textContent =
-      v1 === v2 ? "Double! Plays as double the value." : "";
+    setDieValue("die1",v1); setDieValue("die2",v2);
+    d1.classList.remove("rolling"); d2.classList.remove("rolling");
+    document.getElementById("diceSum").textContent = `${v1} + ${v2} = ${v1+v2}`;
+    document.getElementById("diceDouble").textContent = v1===v2 ? "Double! Plays as double the value." : "";
   }, 480);
 }
 
 async function declareTawleWin(winnerName) {
-  const btn1 = document.getElementById("declareWinBtn1");
-  const btn2 = document.getElementById("declareWinBtn2");
-  btn1.disabled = true;
-  btn2.disabled = true;
+  const btn1 = document.getElementById("declareWinBtn1"), btn2 = document.getElementById("declareWinBtn2");
+  btn1.disabled = true; btn2.disabled = true;
   const clickedBtn = winnerName === tawlePlayers[0] ? btn1 : btn2;
-  const otherBtn = clickedBtn === btn1 ? btn2 : btn1;
+  const otherBtn   = clickedBtn === btn1 ? btn2 : btn1;
   clickedBtn.textContent = "Saving…";
-
   const loser = tawlePlayers.find(p => p !== winnerName);
-
-  const record = {
-    type: "tawle",
-    date: new Date().toISOString(),
-    players: tawlePlayers,
-    winner: winnerName,
-    loser: loser,
-    recordedBy: session.username
-  };
-
+  const record = { type:"tawle", date:new Date().toISOString(), players:tawlePlayers, winner:winnerName, loser, recordedBy:session.username };
   try {
     await appendGameToHistory(record);
     document.getElementById("tawleHeading").textContent = `${winnerName} won! ✓ Saved to history`;
     clickedBtn.textContent = "Saved ✓";
     otherBtn.style.display = "none";
     launchFireworks();
-  } catch (e) {
-    btn1.disabled = false;
-    btn2.disabled = false;
+  } catch(e) {
+    btn1.disabled = false; btn2.disabled = false;
     clickedBtn.textContent = winnerName === tawlePlayers[0] ? `${tawlePlayers[0]} wins` : `${tawlePlayers[1]} wins`;
     alert("Could not save: " + e.message);
   }
 }
 
-// ---------- Fireworks celebration ----------
+// ─────────────────────────────────────────────
+// Fireworks
+// ─────────────────────────────────────────────
 function launchFireworks() {
   const canvas = document.getElementById("fireworksCanvas");
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (reduceMotion) return;
-
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   canvas.style.display = "block";
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
   const ctx = canvas.getContext("2d");
-
-  const colors = ["#d4af37", "#e8cf7a", "#f4ecd8", "#b1473e", "#6fae8d"];
+  const colors = ["#d4af37","#e8cf7a","#f4ecd8","#b1473e","#6fae8d"];
   let particles = [];
-
   function spawnBurst() {
-    const x = canvas.width * (0.2 + Math.random() * 0.6);
-    const y = canvas.height * (0.15 + Math.random() * 0.35);
-    const color = colors[Math.floor(Math.random() * colors.length)];
-    const count = 36;
-    for (let i = 0; i < count; i++) {
-      const angle = (Math.PI * 2 * i) / count;
-      const speed = 2 + Math.random() * 3;
-      particles.push({
-        x, y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        life: 60 + Math.random() * 20,
-        age: 0,
-        color
-      });
+    const x = canvas.width * (.2 + Math.random()*.6);
+    const y = canvas.height * (.15 + Math.random()*.35);
+    const color = colors[Math.floor(Math.random()*colors.length)];
+    for (let i = 0; i < 36; i++) {
+      const angle = (Math.PI*2*i)/36, speed = 2+Math.random()*3;
+      particles.push({ x,y, vx:Math.cos(angle)*speed, vy:Math.sin(angle)*speed, life:60+Math.random()*20, age:0, color });
     }
   }
-
-  let burstsLeft = 5;
-  let frame = 0;
-  const burstInterval = 22;
-
+  let burstsLeft=5, frame=0;
   function tick() {
     frame++;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    if (burstsLeft > 0 && frame % burstInterval === 0) {
-      spawnBurst();
-      burstsLeft--;
-    }
-
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    if (burstsLeft>0 && frame%22===0) { spawnBurst(); burstsLeft--; }
     particles.forEach(p => {
-      p.age++;
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vy += 0.04; // gravity
-      const alpha = Math.max(0, 1 - p.age / p.life);
-      ctx.globalAlpha = alpha;
+      p.age++; p.x+=p.vx; p.y+=p.vy; p.vy+=.04;
+      ctx.globalAlpha = Math.max(0,1-p.age/p.life);
       ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(p.x,p.y,2.5,0,Math.PI*2); ctx.fill();
     });
-    ctx.globalAlpha = 1;
-
-    particles = particles.filter(p => p.age < p.life);
-
-    if (burstsLeft > 0 || particles.length > 0) {
-      requestAnimationFrame(tick);
-    } else {
-      canvas.style.display = "none";
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
+    ctx.globalAlpha=1;
+    particles = particles.filter(p=>p.age<p.life);
+    if (burstsLeft>0||particles.length>0) requestAnimationFrame(tick);
+    else { canvas.style.display="none"; ctx.clearRect(0,0,canvas.width,canvas.height); }
   }
-
   requestAnimationFrame(tick);
 }
 </script>
