@@ -900,7 +900,7 @@ function buildRoundInputs() {
       row.style.gridTemplateColumns = "";
       // Always rebuild the picker fresh (pure DOM, no innerHTML)
       row.innerHTML = "";
-      likhaMode = "cards";
+      row.style.cssText = "display:block;width:100%;";
       buildLikhaPicker(names, row);
     } else {
       row.classList.add("cols-4");
@@ -930,6 +930,7 @@ let   likhaMode     = "cards";
 
 function buildLikhaPicker(names, container) {
   container.innerHTML = "";
+  likhaMode = "cards"; // always start fresh in card mode
 
   // ── Tabs ──
   const tabs = document.createElement("div");
