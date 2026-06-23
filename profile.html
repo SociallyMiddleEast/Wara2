@@ -34,7 +34,8 @@
 
     <label>Profile photo</label>
     <div style="display:flex; align-items:center; gap:14px; margin-bottom:6px;">
-      <img id="imagePreview" src="" alt="" style="width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid var(--gold); background: rgba(0,0,0,0.2);">
+      <img id="imagePreview" src="" alt=""
+        style="width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid var(--gold); background:rgba(0,0,0,0.2);">
       <div style="flex:1;">
         <input type="file" id="imageFile" accept="image/*" style="padding:8px; font-size:0.85rem;">
         <div style="font-size:0.72rem; opacity:0.6; margin-top:6px;">
@@ -47,8 +48,7 @@
     <input type="password" id="password" placeholder="Leave blank to keep current password" autocomplete="new-password">
 
     <div class="error" id="profileError"></div>
-    <div id="profileSuccess" style="color: var(--gold-soft); font-size:0.85rem; margin-top:10px; min-height:1.2em;"></div>
-
+    <div id="profileSuccess" style="color:var(--gold-soft); font-size:0.85rem; margin-top:10px; min-height:1.2em;"></div>
     <button class="full" id="saveBtn" style="margin-top:18px;">Save changes</button>
   </div>
 
@@ -63,36 +63,35 @@ const session = requireLogin();
 if (session) renderUserChip(session);
 
 // Pre-fill fields
-document.getElementById("username").value = session.username || "";
+document.getElementById("username").value  = session.username  || "";
 document.getElementById("firstName").value = session.firstName || "";
-document.getElementById("lastName").value = session.lastName || "";
-document.getElementById("phone").value = session.phone || "";
+document.getElementById("lastName").value  = session.lastName  || "";
+document.getElementById("phone").value     = session.phone     || "";
 
-// Show current image or initials placeholder
-const defaultImageUrl = () => 'https://api.dicebear.com/7.x/initials/svg?seed=' + encodeURIComponent(session.firstName || "U");
+const defaultImageUrl = () =>
+  "https://api.dicebear.com/7.x/initials/svg?seed=" + encodeURIComponent(session.firstName || "U");
+
 document.getElementById("imagePreview").src = session.image || defaultImageUrl();
 
-let pendingImage = null; // { base64, mimeType, dataUrl } when a new photo is chosen
+// pendingImage holds the resized base64 data URL when a photo is chosen
+let pendingImageDataUrl = null;
 
-// When user picks a photo — resize/compress it and preview immediately
 document.getElementById("imageFile").addEventListener("change", async (e) => {
   const file = e.target.files[0];
   if (!file) return;
-
   const errEl = document.getElementById("profileError");
   errEl.textContent = "";
   document.getElementById("profileSuccess").textContent = "";
-
   try {
-    const result = await resizeImage(file, 500, 0.8);
-    pendingImage = result;
-    document.getElementById("imagePreview").src = result.dataUrl;
+    const dataUrl = await resizeImage(file, 300, 0.7); // small enough to fit in a Sheet cell
+    pendingImageDataUrl = dataUrl;
+    document.getElementById("imagePreview").src = dataUrl;
   } catch (err) {
     errEl.textContent = "Could not process that image: " + err.message;
   }
 });
 
-// Resize/compress image to maxDim px JPEG at given quality, returns { base64, mimeType, dataUrl }
+// Resize image and return a data URL (data:image/jpeg;base64,...)
 function resizeImage(file, maxDim, quality) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -104,18 +103,15 @@ function resizeImage(file, maxDim, quality) {
         let { width, height } = img;
         if (width > height && width > maxDim) {
           height = Math.round(height * (maxDim / width));
-          width = maxDim;
+          width  = maxDim;
         } else if (height > maxDim) {
-          width = Math.round(width * (maxDim / height));
+          width  = Math.round(width * (maxDim / height));
           height = maxDim;
         }
         const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = width; canvas.height = height;
         canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-        const mimeType = "image/jpeg";
-        const dataUrl = canvas.toDataURL(mimeType, quality);
-        resolve({ base64: dataUrl.split(",")[1], mimeType, dataUrl });
+        resolve(canvas.toDataURL("image/jpeg", quality));
       };
       img.src = reader.result;
     };
@@ -125,21 +121,8 @@ function resizeImage(file, maxDim, quality) {
 
 document.getElementById("saveBtn").addEventListener("click", saveProfile);
 
-// Inline copy — ensures it's available even if common.js cached version is old
-async function uploadProfileImage(username, base64Data, mimeType) {
-  const res = await fetch(SHEET_API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({ action: "uploadImage", username, imageData: base64Data, mimeType })
-  });
-  if (!res.ok) throw new Error(`Failed to upload image: ${res.status}`);
-  const data = await res.json();
-  if (data.error) throw new Error(data.error);
-  return data.url;
-}
-
 async function saveProfile() {
-  const errEl = document.getElementById("profileError");
+  const errEl     = document.getElementById("profileError");
   const successEl = document.getElementById("profileSuccess");
   errEl.textContent = "";
   successEl.textContent = "";
@@ -157,28 +140,23 @@ async function saveProfile() {
 
   const btn = document.getElementById("saveBtn");
   btn.disabled = true;
+  btn.textContent = "Saving…";
 
   try {
-    // 1. Upload image to Drive first if a new one was chosen
-    let imageUrl = session.image || "";
-
-    if (pendingImage) {
-      btn.textContent = "Uploading photo…";
-      imageUrl = await uploadProfileImage(newUsername, pendingImage.base64, pendingImage.mimeType);
-    }
-
-    // 2. Save all profile fields to the Users sheet
-    btn.textContent = "Saving…";
-    const fields = { username: newUsername, firstName, lastName, phone, image: imageUrl };
-    if (password) fields.password = password;
+    // Build fields — include the image data URL directly if a new one was chosen.
+    // No separate upload step needed: updateUser writes it straight to the sheet cell.
+    const fields = { username: newUsername, firstName, lastName, phone };
+    if (password)           fields.password = password;
+    if (pendingImageDataUrl) fields.image   = pendingImageDataUrl;
 
     await updateUser(session.username, fields);
 
-    // 3. Update session so chip and pages reflect new name/image immediately
+    // Update session
+    const imageUrl = pendingImageDataUrl || session.image || "";
     const updatedSession = { ...session, username: newUsername, firstName, lastName, phone, image: imageUrl };
     sessionStorage.setItem("cg_session", JSON.stringify(updatedSession));
 
-    pendingImage = null;
+    pendingImageDataUrl = null;
     successEl.textContent = "✓ Profile saved.";
     renderUserChip(updatedSession);
     document.getElementById("imagePreview").src = imageUrl || defaultImageUrl();
