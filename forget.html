@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Card Table — Forgot Password</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="style.css">
+<style>
+.wa-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: #25D366; color: #fff;
+  border: none; border-radius: 10px;
+  padding: 13px 22px; font-size: .92rem; font-weight: 700;
+  cursor: pointer; text-decoration: none; width: 100%;
+  font-family: 'Inter', sans-serif; margin-top: 6px;
+  transition: opacity .15s;
+}
+.wa-btn:hover { opacity: .88; }
+.auth-links {
+  display: flex;
+  justify-content: center;
+  margin-top: 18px;
+}
+.auth-links a {
+  font-size: .83rem;
+  opacity: .65;
+  text-decoration: none;
+  color: inherit;
+}
+.auth-links a:hover { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="wrap" style="max-width:420px;">
+  <div class="brand" style="justify-content:center; border-bottom:none; margin-bottom:36px;">
+    <div style="text-align:center;">
+      <div class="suit" style="display:block; margin-bottom:6px; font-size:1.4rem; letter-spacing:.4em;">♠ ♥ ♦ ♣</div>
+      <h1>Card Table</h1>
+    </div>
+  </div>
+
+  <div class="panel">
+    <p class="eyebrow">Password help</p>
+    <h2 style="margin-top:0;">Forgot password?</h2>
+
+    <p style="font-size:.87rem; opacity:.75; line-height:1.65; margin:0 0 18px;">
+      Enter your username below and tap the button to send the admin
+      a pre-filled WhatsApp message requesting a reset.
+      They'll reply with your new password.
+    </p>
+
+    <label for="username">Your username</label>
+    <input type="text" id="username" autocomplete="username"
+      placeholder="e.g. elie" style="text-transform:lowercase;">
+
+    <div class="error" id="forgotError"></div>
+
+    <a id="waLink" href="#" target="_blank" rel="noopener" class="wa-btn"
+      onclick="return buildLink(event)">
+      💬 Message admin on WhatsApp
+    </a>
+
+    <div class="auth-links">
+      <a href="index.html">← Back to sign in</a>
+    </div>
+  </div>
+</div>
+
+<script src="common.js"></script>
+<script>
+const ADMIN_WA = "+96170234138";
+
+// Lowercase username as user types
+document.getElementById("username").addEventListener("input", e => {
+  const el = e.target;
+  const pos = el.selectionStart;
+  el.value = el.value.toLowerCase();
+  el.setSelectionRange(pos, pos);
+});
+
+function buildLink(e) {
+  const errEl    = document.getElementById("forgotError");
+  const username = document.getElementById("username").value.trim();
+  errEl.textContent = "";
+
+  if (!username) {
+    errEl.textContent = "Enter your username first.";
+    e.preventDefault();
+    return false;
+  }
+
+  const msg = encodeURIComponent(
+    `Hi, I forgot my password for Card Table. My username is "${username}". Can you reset it for me?`
+  );
+  document.getElementById("waLink").href =
+    `https://wa.me/${ADMIN_WA.replace(/\D/g,"")}?text=${msg}`;
+
+  return true; // allow the link to open
+}
+</script>
+</body>
+</html>
