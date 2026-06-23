@@ -1064,10 +1064,11 @@ function setLikhaMode(mode) {
   likhaMode = mode;
   const cardDiv   = document.getElementById("likhaCardMode");
   const manualDiv = document.getElementById("likhaManualMode");
-  const btns      = document.querySelectorAll(".likha-mode-btn");
-  if (cardDiv)   cardDiv.style.display   = mode==="cards" ? "" : "none";
-  if (manualDiv) manualDiv.style.display = mode==="manual"? "" : "none";
-  btns.forEach((b,idx) => b.classList.toggle("active", (idx===0&&mode==="cards")||(idx===1&&mode==="manual")));
+  const btns      = document.querySelectorAll(".likha-tab");
+  if (cardDiv)   cardDiv.style.display   = mode === "cards"  ? "" : "none";
+  if (manualDiv) manualDiv.style.display = mode === "manual" ? "" : "none";
+  btns.forEach((b, idx) => b.classList.toggle("active",
+    (idx === 0 && mode === "cards") || (idx === 1 && mode === "manual")));
 }
 
 function getLikhaScores() {
@@ -1111,17 +1112,24 @@ function buildRoundFromInputs(errEl) {
     return values;
   }
   if (r.perPlayer) {
-    const values = [];
-    for (let i = 0; i < 4; i++) {
-      const raw = document.getElementById(`round-p${i}`).value;
-      const v   = raw===""?0:Number(raw);
-      if (Number.isNaN(v)) { errEl.textContent="Enter valid numbers."; return null; }
-      if (!r.allowNegative&&v<0) { errEl.textContent=`${r.label} only allows positive scores.`; return null; }
-      values.push(v);
-    }
-    if (r.roundSum!==undefined) {
-      const sum = values.reduce((s,v)=>s+v,0);
-      if (sum!==r.roundSum) { errEl.textContent=`Round total must equal ${r.roundSum} (currently ${sum}).`; return null; }
+    const values = r.roundSum !== undefined ? getLikhaScores() : (() => {
+      const arr = [];
+      for (let i = 0; i < 4; i++) {
+        const raw = document.getElementById("round-p" + i).value;
+        const v   = raw === "" ? 0 : Number(raw);
+        if (Number.isNaN(v)) { errEl.textContent = "Enter valid numbers."; return null; }
+        if (!r.allowNegative && v < 0) { errEl.textContent = r.label + " only allows positive scores."; return null; }
+        arr.push(v);
+      }
+      return arr;
+    })();
+    if (values === null) return null;
+    if (r.roundSum !== undefined) {
+      const sum = values.reduce((s, v) => s + v, 0);
+      if (sum !== r.roundSum) {
+        errEl.textContent = "Round total must equal " + r.roundSum + " (currently " + sum + ").";
+        return null;
+      }
     }
     return values;
   }
