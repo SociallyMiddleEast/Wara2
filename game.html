@@ -137,67 +137,68 @@
 .likha-tabs {
   display: flex;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 .likha-tab {
-  flex: 1; height: 38px; padding: 0;
-  font-size: .8rem; font-weight: 600;
+  flex: 1; height: 42px; padding: 0;
+  font-size: .88rem; font-weight: 600;
   white-space: nowrap; cursor: pointer;
   font-family: 'Inter', sans-serif;
   border: none; background: transparent; color: inherit;
-  opacity: .45; transition: all .15s;
-  display: flex; align-items: center; justify-content: center; gap: 5px;
+  opacity: .4; transition: all .2s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
 }
 .likha-tab:first-child { border-right: 1px solid var(--line); }
 .likha-tab.active { background: var(--gold); color: #1a1612; opacity: 1; }
 
-/* ── Card picker grid ──
-   One row per player, full width.
-   Columns: name | − hearts + | Q♠ | 10♦ | score
-*/
+/* Player grid */
 .likha-grid {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
+/* Each player row — full width card */
 .lp-row {
-  display: grid;
-  /* name | stepper | queen | diamond | score */
-  grid-template-columns: minmax(0,1fr) auto auto auto;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  background: rgba(0,0,0,.15);
+  gap: 8px;
+  background: rgba(0,0,0,.18);
   border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 8px 10px;
+  border-radius: 12px;
+  padding: 10px 12px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.lp-name {
-  font-size: .8rem; font-weight: 700;
-  opacity: .8; white-space: nowrap;
-  overflow: hidden; text-overflow: ellipsis;
+.lp-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
   min-width: 0;
 }
 
-/* Hearts stepper — inside the name column, below name */
-.lp-left {
-  display: flex; flex-direction: column; gap: 4px; min-width: 0;
+.lp-name {
+  font-size: .82rem; font-weight: 700;
+  opacity: .8; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
 }
 
+/* Hearts stepper — stretches full available width */
 .lp-stepper {
-  display: flex; align-items: center;
+  display: flex; align-items: stretch;
   background: rgba(0,0,0,.25);
   border: 1px solid var(--line);
-  border-radius: 8px; overflow: hidden;
-  height: 40px;
+  border-radius: 10px; overflow: hidden;
+  height: 48px;
 }
 .lp-stepper button {
-  width: 40px; height: 40px; flex-shrink: 0;
+  width: 48px; height: 48px; flex-shrink: 0;
   background: none; border: none; color: inherit;
-  font-size: 1.4rem; font-weight: 700;
+  font-size: 1.6rem; font-weight: 700;
   cursor: pointer; transition: background .1s;
   display: flex; align-items: center; justify-content: center;
   -webkit-tap-highlight-color: transparent;
@@ -205,49 +206,53 @@
 .lp-stepper button:active { background: rgba(255,255,255,.2); }
 .lp-stepper .lp-hs-inner {
   flex: 1; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 0;
+  align-items: center; justify-content: center; gap: 1px;
 }
 .lp-stepper .lp-hval {
-  font-size: 1.2rem; font-family: 'DM Mono',monospace;
+  font-size: 1.3rem; font-family: 'DM Mono',monospace;
   font-weight: 700; line-height: 1;
 }
 .lp-stepper .lp-hlbl {
-  font-size: .58rem; opacity: .4; letter-spacing: .02em;
+  font-size: .6rem; opacity: .4; letter-spacing: .03em;
 }
 
 /* Q♠ / 10♦ toggle buttons */
 .lp-toggle {
-  width: 52px; height: 52px; flex-shrink: 0;
+  width: 58px; height: 58px; flex-shrink: 0;
   display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 1px;
-  border: 1px solid var(--line); border-radius: 8px;
+  align-items: center; justify-content: center; gap: 2px;
+  border: 1px solid var(--line); border-radius: 10px;
   background: rgba(0,0,0,.2);
   cursor: pointer; user-select: none;
   transition: all .15s;
   -webkit-tap-highlight-color: transparent;
 }
-.lp-toggle .lt-card { font-size: .95rem; font-weight: 700; line-height: 1; }
-.lp-toggle .lt-pts  { font-size: .6rem; opacity: .4; }
-.lp-toggle.on { background: rgba(212,175,55,.18); border-color: var(--gold); }
-.lp-toggle.on .lt-pts { color: var(--gold); opacity: .8; }
+.lp-toggle .lt-card { font-size: 1.05rem; font-weight: 700; line-height: 1; }
+.lp-toggle .lt-pts  { font-size: .65rem; opacity: .4; }
+.lp-toggle.on { background: rgba(212,175,55,.2); border-color: var(--gold); }
+.lp-toggle.on .lt-pts { color: var(--gold); opacity: .85; }
 
-/* Score badge */
+/* Score display */
 .lp-score {
-  width: 44px; height: 52px; flex-shrink: 0;
+  width: 50px; height: 58px; flex-shrink: 0;
   display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 0;
-  border-radius: 8px; background: rgba(212,175,55,.07);
+  align-items: center; justify-content: center; gap: 1px;
+  border-radius: 10px; background: rgba(212,175,55,.08);
+  border: 1px solid rgba(212,175,55,.2);
 }
-.lp-score .ls-val { font-size: 1.2rem; font-family: 'DM Mono',monospace; font-weight: 700; color: var(--gold); line-height: 1; }
-.lp-score .ls-lbl { font-size: .58rem; opacity: .4; }
+.lp-score .ls-val {
+  font-size: 1.4rem; font-family: 'DM Mono',monospace;
+  font-weight: 700; color: var(--gold); line-height: 1;
+}
+.lp-score .ls-lbl { font-size: .6rem; opacity: .4; }
 
 /* Total bar */
 .likha-total-bar {
   display: flex; align-items: center; justify-content: space-between;
-  margin-top: 10px; padding: 10px 14px;
-  border-radius: 10px; background: rgba(0,0,0,.2); font-size: .85rem;
+  margin-top: 12px; padding: 12px 16px;
+  border-radius: 10px; background: rgba(0,0,0,.2); font-size: .88rem;
 }
-.lt-sum { font-family: 'DM Mono',monospace; font-weight: 700; font-size: 1.1rem; }
+.lt-sum { font-family: 'DM Mono',monospace; font-weight: 700; font-size: 1.2rem; }
 .lt-ok  { color: #6fae8d; font-weight: 700; }
 .lt-bad { color: #b1473e; font-weight: 700; }
 .lt-pending { opacity: .4; }
@@ -976,11 +981,11 @@ function buildLikhaPickerHTML(names) {
     '<div id="likhaCardMode" style="' + ch + '">',
       '<div class="likha-grid">' + rows + '</div>',
       '<div class="likha-total-bar">',
-        '<span>Round total</span>',
-        '<span>',
+        '<span style="opacity:.6">Round total</span>',
+        '<span style="display:flex;align-items:baseline;gap:6px;">',
           '<span class="lt-sum" id="likhaTotalSum">0</span>',
-          '<span style="opacity:.4"> / 36</span>',
-          '&nbsp;<span id="likhaTotalStatus" class="lt-pending">36 left</span>',
+          '<span style="opacity:.35">/ 36</span>',
+          '<span id="likhaTotalStatus" class="lt-pending">· 36 left</span>',
         '</span>',
       '</div>',
     '</div>',
@@ -1064,11 +1069,15 @@ function setLikhaMode(mode) {
   likhaMode = mode;
   const cardDiv   = document.getElementById("likhaCardMode");
   const manualDiv = document.getElementById("likhaManualMode");
-  const btns      = document.querySelectorAll(".likha-tab");
   if (cardDiv)   cardDiv.style.display   = mode === "cards"  ? "" : "none";
   if (manualDiv) manualDiv.style.display = mode === "manual" ? "" : "none";
-  btns.forEach((b, idx) => b.classList.toggle("active",
-    (idx === 0 && mode === "cards") || (idx === 1 && mode === "manual")));
+  // Re-render the tabs with correct active state by updating the picker HTML
+  // (simpler than querying stale DOM references)
+  const tabs = document.querySelectorAll(".likha-tab");
+  tabs.forEach((btn, idx) => {
+    const isActive = (idx === 0 && mode === "cards") || (idx === 1 && mode === "manual");
+    btn.classList.toggle("active", isActive);
+  });
 }
 
 function getLikhaScores() {
