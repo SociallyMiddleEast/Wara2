@@ -452,51 +452,52 @@ async function init() {
   document.getElementById("startBtn").addEventListener("click", startGame);
   document.getElementById("addRoundBtn").addEventListener("click", addRound);
 
-  // Show a minimal loading state — don't show setup yet
-  // (we need to check for live games first to avoid flashing the setup panel)
-  document.getElementById("setupPanel").style.display    = "none";
-  document.getElementById("tawleSetupPanel").style.display = "none";
+  // Show loading indicator inside the setup panel while we fetch
+  const isTawle = type === "tawle";
+  const setupEl = document.getElementById(isTawle ? "tawleSetupPanel" : "setupPanel");
+  setupEl.style.display = "";
+  const loadingEl = document.createElement("p");
+  loadingEl.id = "setupLoadingMsg";
+  loadingEl.style.cssText = "opacity:.5;font-size:.85rem;margin:0;";
+  loadingEl.textContent = "Loading players…";
+  setupEl.appendChild(loadingEl);
 
   // Load users + live games IN PARALLEL
-  const [users, liveGames] = await Promise.all([
-    fetchUsers().catch(() => []),
-    fetchLiveGames().catch(() => [])
-  ]);
+  let users = [], liveGames = [];
+  try {
+    [users, liveGames] = await Promise.all([
+      fetchUsers().catch(() => []),
+      fetchLiveGames().catch(() => [])
+    ]);
+  } catch(e) { /* silently fall through to show setup */ }
+
+  // Remove loading message
+  const lm = document.getElementById("setupLoadingMsg");
+  if (lm) lm.remove();
 
   allUsers = users;
 
-  // Check if there's an active game to rejoin FIRST
-  const myGames = liveGames.filter(g =>
+  // Check for active live games to rejoin
+  const myGames = Array.isArray(liveGames) ? liveGames.filter(g =>
     g.type === type &&
     Array.isArray(g.players) &&
     g.players.some(p => namesMatch(p, session.firstName, session.lastName))
-  );
+  ) : [];
 
   if (myGames.length > 0) {
-    // Show join panel — don't show setup at all
+    // Hide setup, show join panel
+    setupEl.style.display = "none";
     showJoinPanel(myGames, type);
     document.getElementById("startNewBtn")?.addEventListener("click", () => {
       document.getElementById("joinPanel").style.display = "none";
-      // Only now show setup + build pickers
-      if (type === "tawle") {
-        showTawleSetup();
-        buildTawlePickers();
-      } else {
-        showSetup();
-        buildPlayerPickers();
-        buildGuestSlotButtons();
-      }
+      setupEl.style.display = "";
+      if (isTawle) { buildTawlePickers(); }
+      else { buildPlayerPickers(); buildGuestSlotButtons(); }
     });
   } else {
-    // No live game — show setup immediately with pickers populated
-    if (type === "tawle") {
-      showTawleSetup();
-      buildTawlePickers();
-    } else {
-      showSetup();
-      buildPlayerPickers();
-      buildGuestSlotButtons();
-    }
+    // No live game — populate pickers and show setup
+    if (isTawle) { buildTawlePickers(); }
+    else { buildPlayerPickers(); buildGuestSlotButtons(); }
   }
 }
 
