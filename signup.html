@@ -286,16 +286,44 @@ function triggerGoogleSignIn() {
     nonce:         nonce,
     prompt:        "select_account"
   });
-  window.location.href = "https://accounts.google.com/o/oauth2/v2/auth?" + params;
+  const url = "https://accounts.google.com/o/oauth2/v2/auth?" + params;
+  const w = 500, h = 600;
+  const left = Math.round((screen.width  - w) / 2);
+  const top  = Math.round((screen.height - h) / 2);
+  const popup = window.open(url, "google_signin",
+    `width=${w},height=${h},left=${left},top=${top},toolbar=no,menubar=no`);
+
+  // Poll popup URL for the token
+  const poll = setInterval(() => {
+    try {
+      if (!popup || popup.closed) { clearInterval(poll); return; }
+      const hash = new URLSearchParams(popup.location.hash.slice(1));
+      const idToken = hash.get("id_token");
+      if (idToken) {
+        clearInterval(poll);
+        popup.close();
+        handleGoogleCredential({ credential: idToken });
+      }
+    } catch(e) { /* cross-origin while Google is loading — keep polling */ }
+  }, 300);
 }
 
 function checkGoogleRedirect() {
-  const hash = new URLSearchParams(window.location.hash.slice(1));
-  const idToken = hash.get("id_token");
-  if (!idToken) return;
-  history.replaceState(null, "", window.location.pathname);
-  handleGoogleCredential({ credential: idToken });
+  // Catch direct redirect (non-popup) fallback
+  setTimeout(() => {
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const idToken = hash.get("id_token");
+    if (!idToken) return;
+    history.replaceState(null, "", window.location.pathname);
+    handleGoogleCredential({ credential: idToken });
+  }, 100);
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("googleSocialBtn");
+  if (btn) { btn.addEventListener("click", triggerGoogleSignIn); btn.removeAttribute("onclick"); }
+});
+
 window.addEventListener("load", checkGoogleRedirect);
 
 function handleGoogleCredential(response) {
