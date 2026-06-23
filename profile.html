@@ -57,6 +57,7 @@
   </div>
 </div>
 
+<script src="hash.js"></script>
 <script src="common.js"></script>
 <script>
 const session = requireLogin();
@@ -146,7 +147,7 @@ async function saveProfile() {
     // Build fields — include the image data URL directly if a new one was chosen.
     // No separate upload step needed: updateUser writes it straight to the sheet cell.
     const fields = { username: newUsername, firstName, lastName, phone };
-    if (password)           fields.password = password;
+    if (password)           fields.password = await hashPassword(password);
     if (pendingImageDataUrl) fields.image   = pendingImageDataUrl;
 
     await updateUser(session.username, fields);
