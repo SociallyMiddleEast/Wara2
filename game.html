@@ -898,14 +898,10 @@ function buildRoundInputs() {
       // ── Likha card picker — built ONCE, never rebuilt ──
       row.classList.remove("cols-4");
       row.style.gridTemplateColumns = "";
-      if (!document.getElementById("likhaCardMode")) {
-        likhaMode = "cards"; // always start in card picker mode
-        const picker = document.createElement("div");
-        picker.className = "likha-picker";
-        picker.innerHTML = buildLikhaPickerHTML(names);
-        row.appendChild(picker);
-        updateLikhaUI();
-      }
+      // Always rebuild the picker fresh (pure DOM, no innerHTML)
+      row.innerHTML = "";
+      likhaMode = "cards";
+      buildLikhaPicker(names, row);
     } else {
       row.classList.add("cols-4");
       names.forEach((name,i) => {
@@ -925,97 +921,214 @@ function buildRoundInputs() {
 }
 
 
-// ── Likha card picker helpers ──────────────────────────────────
+// ── Likha card picker ─────────────────────────────────────────
 
-let likhaMode = "cards"; // "cards" | "manual"
+const likhaHearts   = [0, 0, 0, 0];
+const likhaQueens   = [false, false, false, false];
+const likhaDiamonds = [false, false, false, false];
+let   likhaMode     = "cards";
 
-function buildLikhaPickerHTML(names) {
-  const ca = likhaMode === "cards"  ? "active" : "";
-  const ma = likhaMode === "manual" ? "active" : "";
-  const ch = likhaMode === "manual" ? "display:none" : "";
-  const mh = likhaMode === "cards"  ? "display:none" : "";
+function buildLikhaPicker(names, container) {
+  container.innerHTML = "";
 
-  let rows = "";
+  // ── Tabs ──
+  const tabs = document.createElement("div");
+  tabs.style.cssText = "display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:14px;";
+
+  const tabCard = document.createElement("button");
+  tabCard.type = "button";
+  tabCard.textContent = "🃏 Card picker";
+  tabCard.style.cssText = "flex:1;height:42px;border:none;border-right:1px solid var(--line);cursor:pointer;font-family:Inter,sans-serif;font-size:.88rem;font-weight:600;background:var(--gold);color:#1a1612;transition:all .2s;";
+
+  const tabManual = document.createElement("button");
+  tabManual.type = "button";
+  tabManual.textContent = "✏️ Manual";
+  tabManual.style.cssText = "flex:1;height:42px;border:none;cursor:pointer;font-family:Inter,sans-serif;font-size:.88rem;font-weight:600;background:transparent;color:inherit;opacity:.4;transition:all .2s;";
+
+  tabs.appendChild(tabCard);
+  tabs.appendChild(tabManual);
+  container.appendChild(tabs);
+
+  // ── Card mode panel ──
+  const cardPanel = document.createElement("div");
+  cardPanel.id = "likhaCardMode";
+
+  const grid = document.createElement("div");
+  grid.style.cssText = "display:flex;flex-direction:column;gap:8px;";
+
   names.forEach((name, i) => {
-    const fn = name.split(" ")[0];
-    rows += [
-      '<div class="lp-row">',
-        '<div class="lp-left">',
-          '<div class="lp-name">' + fn + '</div>',
-          '<div class="lp-stepper">',
-            '<button type="button" onclick="stepHeart(' + i + ',-1)">−</button>',
-            '<div class="lp-hs-inner">',
-              '<span class="lp-hval" id="hearts-val-' + i + '">0</span>',
-              '<span class="lp-hlbl">♥ hearts</span>',
-            '</div>',
-            '<button type="button" onclick="stepHeart(' + i + ',+1)">+</button>',
-          '</div>',
-        '</div>',
-        '<div class="lp-toggle" id="queen-' + i + '" onclick="toggleQueen(' + i + ')">',
-          '<span class="lt-card">Q♠</span>',
-          '<span class="lt-pts">+13</span>',
-        '</div>',
-        '<div class="lp-toggle" id="diamond-' + i + '" onclick="toggleDiamond(' + i + ')">',
-          '<span class="lt-card">10♦</span>',
-          '<span class="lt-pts">+10</span>',
-        '</div>',
-        '<div class="lp-score">',
-          '<span class="ls-val" id="pscore-' + i + '">0</span>',
-          '<span class="ls-lbl">pts</span>',
-        '</div>',
-      '</div>'
-    ].join("");
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.18);border:1px solid var(--line);border-radius:12px;padding:10px 12px;box-sizing:border-box;";
+
+    // Left: name + stepper
+    const left = document.createElement("div");
+    left.style.cssText = "display:flex;flex-direction:column;gap:4px;flex:1;min-width:0;";
+
+    const nameEl = document.createElement("div");
+    nameEl.textContent = name.split(" ")[0];
+    nameEl.style.cssText = "font-size:.82rem;font-weight:700;opacity:.8;";
+    left.appendChild(nameEl);
+
+    const stepper = document.createElement("div");
+    stepper.style.cssText = "display:flex;align-items:stretch;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:10px;overflow:hidden;height:48px;";
+
+    const btnMinus = document.createElement("button");
+    btnMinus.type = "button";
+    btnMinus.textContent = "−";
+    btnMinus.style.cssText = "width:48px;height:48px;flex-shrink:0;background:none;border:none;color:inherit;font-size:1.6rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;";
+    btnMinus.addEventListener("click", () => stepHeart(i, -1));
+
+    const inner = document.createElement("div");
+    inner.style.cssText = "flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;";
+
+    const hval = document.createElement("span");
+    hval.id = "hearts-val-" + i;
+    hval.textContent = "0";
+    hval.style.cssText = "font-size:1.3rem;font-family:'DM Mono',monospace;font-weight:700;line-height:1;";
+
+    const hlbl = document.createElement("span");
+    hlbl.textContent = "♥ hearts";
+    hlbl.style.cssText = "font-size:.6rem;opacity:.4;";
+
+    inner.appendChild(hval);
+    inner.appendChild(hlbl);
+
+    const btnPlus = document.createElement("button");
+    btnPlus.type = "button";
+    btnPlus.textContent = "+";
+    btnPlus.style.cssText = btnMinus.style.cssText;
+    btnPlus.addEventListener("click", () => stepHeart(i, +1));
+
+    stepper.appendChild(btnMinus);
+    stepper.appendChild(inner);
+    stepper.appendChild(btnPlus);
+    left.appendChild(stepper);
+    row.appendChild(left);
+
+    // Q♠ toggle
+    const queen = document.createElement("div");
+    queen.id = "queen-" + i;
+    queen.style.cssText = "width:58px;height:58px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,.2);cursor:pointer;user-select:none;transition:all .15s;-webkit-tap-highlight-color:transparent;";
+    queen.innerHTML = "<span style='font-size:1.05rem;font-weight:700;line-height:1;'>Q♠</span><span style='font-size:.65rem;opacity:.4;'>+13</span>";
+    queen.addEventListener("click", () => toggleQueen(i));
+    row.appendChild(queen);
+
+    // 10♦ toggle
+    const diamond = document.createElement("div");
+    diamond.id = "diamond-" + i;
+    diamond.style.cssText = queen.style.cssText;
+    diamond.innerHTML = "<span style='font-size:1.05rem;font-weight:700;line-height:1;'>10♦</span><span style='font-size:.65rem;opacity:.4;'>+10</span>";
+    diamond.addEventListener("click", () => toggleDiamond(i));
+    row.appendChild(diamond);
+
+    // Score
+    const score = document.createElement("div");
+    score.style.cssText = "width:50px;height:58px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border-radius:10px;background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.2);";
+    const sval = document.createElement("span");
+    sval.id = "pscore-" + i;
+    sval.textContent = "0";
+    sval.style.cssText = "font-size:1.4rem;font-family:'DM Mono',monospace;font-weight:700;color:var(--gold);line-height:1;";
+    const slbl = document.createElement("span");
+    slbl.textContent = "pts";
+    slbl.style.cssText = "font-size:.6rem;opacity:.4;";
+    score.appendChild(sval);
+    score.appendChild(slbl);
+    row.appendChild(score);
+
+    grid.appendChild(row);
   });
 
-  let manualInputs = "";
+  cardPanel.appendChild(grid);
+
+  // Total bar
+  const totalBar = document.createElement("div");
+  totalBar.style.cssText = "display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding:12px 16px;border-radius:10px;background:rgba(0,0,0,.2);font-size:.88rem;";
+  const totalLabel = document.createElement("span");
+  totalLabel.textContent = "Round total";
+  totalLabel.style.opacity = ".6";
+  const totalRight = document.createElement("span");
+  totalRight.style.cssText = "display:flex;align-items:baseline;gap:6px;";
+  const sumEl = document.createElement("span");
+  sumEl.id = "likhaTotalSum";
+  sumEl.textContent = "0";
+  sumEl.style.cssText = "font-family:'DM Mono',monospace;font-weight:700;font-size:1.2rem;";
+  const ofEl = document.createElement("span");
+  ofEl.textContent = "/ 36";
+  ofEl.style.opacity = ".35";
+  const statusEl = document.createElement("span");
+  statusEl.id = "likhaTotalStatus";
+  statusEl.textContent = "· 36 left";
+  statusEl.style.opacity = ".4";
+  totalRight.appendChild(sumEl);
+  totalRight.appendChild(ofEl);
+  totalRight.appendChild(statusEl);
+  totalBar.appendChild(totalLabel);
+  totalBar.appendChild(totalRight);
+  cardPanel.appendChild(totalBar);
+  container.appendChild(cardPanel);
+
+  // ── Manual mode panel ──
+  const manualPanel = document.createElement("div");
+  manualPanel.id = "likhaManualMode";
+  manualPanel.style.display = "none";
+  const manualGrid = document.createElement("div");
+  manualGrid.style.cssText = "display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;";
   names.forEach((name, i) => {
-    manualInputs += '<div class="field"><label>' + name.split(" ")[0] +
-      '</label><input type="number" id="round-p' + i +
-      '" inputmode="numeric" placeholder="0" min="0"></div>';
+    const field = document.createElement("div");
+    field.className = "field";
+    const lbl = document.createElement("label");
+    lbl.textContent = name.split(" ")[0];
+    const inp = document.createElement("input");
+    inp.type = "number";
+    inp.id = "round-p" + i;
+    inp.setAttribute("inputmode", "numeric");
+    inp.placeholder = "0";
+    inp.min = "0";
+    field.appendChild(lbl);
+    field.appendChild(inp);
+    manualGrid.appendChild(field);
+  });
+  manualPanel.appendChild(manualGrid);
+  container.appendChild(manualPanel);
+
+  // ── Tab click handlers ──
+  tabCard.addEventListener("click", () => {
+    likhaMode = "cards";
+    cardPanel.style.display = "";
+    manualPanel.style.display = "none";
+    tabCard.style.background = "var(--gold)";
+    tabCard.style.color = "#1a1612";
+    tabCard.style.opacity = "1";
+    tabManual.style.background = "transparent";
+    tabManual.style.color = "inherit";
+    tabManual.style.opacity = ".4";
+  });
+  tabManual.addEventListener("click", () => {
+    likhaMode = "manual";
+    cardPanel.style.display = "none";
+    manualPanel.style.display = "";
+    tabManual.style.background = "var(--gold)";
+    tabManual.style.color = "#1a1612";
+    tabManual.style.opacity = "1";
+    tabCard.style.background = "transparent";
+    tabCard.style.color = "inherit";
+    tabCard.style.opacity = ".4";
   });
 
-  return [
-    '<div class="likha-tabs">',
-      '<button class="likha-tab ' + ca + '" data-mode="cards" onclick="setLikhaMode(this.dataset.mode)">🃏 Card picker</button>',
-      '<button class="likha-tab ' + ma + '" data-mode="manual" onclick="setLikhaMode(this.dataset.mode)">✏️ Manual</button>',
-    '</div>',
-    '<div id="likhaCardMode" style="' + ch + '">',
-      '<div class="likha-grid">' + rows + '</div>',
-      '<div class="likha-total-bar">',
-        '<span style="opacity:.6">Round total</span>',
-        '<span style="display:flex;align-items:baseline;gap:6px;">',
-          '<span class="lt-sum" id="likhaTotalSum">0</span>',
-          '<span style="opacity:.35">/ 36</span>',
-          '<span id="likhaTotalStatus" class="lt-pending">· 36 left</span>',
-        '</span>',
-      '</div>',
-    '</div>',
-    '<div id="likhaManualMode" style="' + mh + '">',
-      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;">',
-        manualInputs,
-      '</div>',
-    '</div>'
-  ].join("");
+  // Init UI
+  updateLikhaUI();
 }
 
-// Hearts per player (0-13)
-const likhaHearts  = [0, 0, 0, 0];
-// true/false for Queen of Spades & 10 of Diamonds
-const likhaQueens  = [false, false, false, false];
-const likhaDiamonds = [false, false, false, false];
-
 function resetLikhaState() {
-  for (let i=0;i<4;i++) { likhaHearts[i]=0; likhaQueens[i]=false; likhaDiamonds[i]=false; }
+  for (let i = 0; i < 4; i++) { likhaHearts[i] = 0; likhaQueens[i] = false; likhaDiamonds[i] = false; }
 }
 
 function stepHeart(i, delta) {
-  const max = 13 - likhaHearts.reduce((s,v,j)=>j!==i?s+v:s, 0);
   likhaHearts[i] = Math.max(0, Math.min(likhaHearts[i] + delta, 13));
   updateLikhaUI();
 }
 
 function toggleQueen(i) {
-  // Only one player can have Q♠
   const already = likhaQueens[i];
   likhaQueens.fill(false);
   likhaQueens[i] = !already;
@@ -1023,7 +1136,6 @@ function toggleQueen(i) {
 }
 
 function toggleDiamond(i) {
-  // Only one player can have 10♦
   const already = likhaDiamonds[i];
   likhaDiamonds.fill(false);
   likhaDiamonds[i] = !already;
@@ -1039,11 +1151,26 @@ function updateLikhaUI() {
     const ps  = document.getElementById("pscore-" + i);
     const qEl = document.getElementById("queen-" + i);
     const dEl = document.getElementById("diamond-" + i);
-    if (hv)  hv.textContent = likhaHearts[i];
-    if (ps)  ps.textContent = score;
-    // new class name is "on" not "active"
-    if (qEl) qEl.classList.toggle("on", likhaQueens[i]);
-    if (dEl) dEl.classList.toggle("on", likhaDiamonds[i]);
+    if (hv) hv.textContent = likhaHearts[i];
+    if (ps) ps.textContent = score;
+    if (qEl) {
+      if (likhaQueens[i]) {
+        qEl.style.background = "rgba(212,175,55,.2)";
+        qEl.style.borderColor = "var(--gold)";
+      } else {
+        qEl.style.background = "rgba(0,0,0,.2)";
+        qEl.style.borderColor = "var(--line)";
+      }
+    }
+    if (dEl) {
+      if (likhaDiamonds[i]) {
+        dEl.style.background = "rgba(212,175,55,.2)";
+        dEl.style.borderColor = "var(--gold)";
+      } else {
+        dEl.style.background = "rgba(0,0,0,.2)";
+        dEl.style.borderColor = "var(--line)";
+      }
+    }
   }
   const sumEl    = document.getElementById("likhaTotalSum");
   const statusEl = document.getElementById("likhaTotalStatus");
@@ -1051,45 +1178,34 @@ function updateLikhaUI() {
   if (statusEl) {
     if (total === 36) {
       statusEl.textContent = "✓ Ready";
-      statusEl.className   = "lt-ok";
+      statusEl.style.color = "#6fae8d";
+      statusEl.style.opacity = "1";
+      statusEl.style.fontWeight = "700";
     } else if (total > 36) {
-      statusEl.textContent = (total - 36) + " over";
-      statusEl.className   = "lt-bad";
+      statusEl.textContent = "· " + (total - 36) + " over";
+      statusEl.style.color = "#b1473e";
+      statusEl.style.opacity = "1";
+      statusEl.style.fontWeight = "700";
     } else {
-      statusEl.textContent = (36 - total) + " left";
-      statusEl.className   = "lt-pending";
+      statusEl.textContent = "· " + (36 - total) + " left";
+      statusEl.style.color = "";
+      statusEl.style.opacity = ".4";
+      statusEl.style.fontWeight = "";
     }
   }
 }
 
-function initLikhaPickerListeners(names) {
-  updateLikhaUI();
-}
-
-function setLikhaMode(mode) {
-  likhaMode = mode;
-  const cardDiv   = document.getElementById("likhaCardMode");
-  const manualDiv = document.getElementById("likhaManualMode");
-  if (cardDiv)   cardDiv.style.display   = mode === "cards"  ? "" : "none";
-  if (manualDiv) manualDiv.style.display = mode === "manual" ? "" : "none";
-  // Re-render the tabs with correct active state by updating the picker HTML
-  // (simpler than querying stale DOM references)
-  const tabs = document.querySelectorAll(".likha-tab");
-  tabs.forEach((btn, idx) => {
-    const isActive = (idx === 0 && mode === "cards") || (idx === 1 && mode === "manual");
-    btn.classList.toggle("active", isActive);
-  });
-}
+function setLikhaMode(mode) { /* kept for compatibility — tabs now handle themselves */ }
 
 function getLikhaScores() {
   if (likhaMode === "manual") {
     return [0,1,2,3].map(i => {
-      const v = Number(document.getElementById(`round-p${i}`)?.value || 0);
+      const v = Number((document.getElementById("round-p" + i) || {}).value || 0);
       return isNaN(v) ? 0 : v;
     });
   }
   return [0,1,2,3].map(i =>
-    likhaHearts[i] + (likhaQueens[i]?13:0) + (likhaDiamonds[i]?10:0)
+    likhaHearts[i] + (likhaQueens[i] ? 13 : 0) + (likhaDiamonds[i] ? 10 : 0)
   );
 }
 
