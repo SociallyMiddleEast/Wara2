@@ -351,6 +351,9 @@
     </div>
   </div>
 
+  <!-- LIKHA PICKER — outside .panel so it's unconstrained full width -->
+  <div id="likhaPickerContainer" style="display:none;margin-bottom:10px;"></div>
+
   <!-- FIREWORKS -->
   <canvas id="fireworksCanvas" style="position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:999;display:none;"></canvas>
 
@@ -724,6 +727,7 @@ function startGame() {
 
   document.getElementById("setupPanel").style.display = "none";
   document.getElementById("scoringPanel").style.display = "";
+  document.getElementById("likhaPickerContainer").style.display = "none";
   document.getElementById("scoringHeading").textContent = `${names[0]}/${names[1]} vs ${names[2]}/${names[3]}`;
 
   buildLedgerHeader();
@@ -898,17 +902,10 @@ function buildRoundInputs() {
       // ── Likha card picker — built ONCE, never rebuilt ──
       row.classList.remove("cols-4");
       row.style.gridTemplateColumns = "";
-      // Place Likha picker in scoringPanel directly, not inside roundInputRow
-      // This avoids score-input-row grid constraints
-      row.style.display = "none"; // hide the constrained row
-      let likhaContainer = document.getElementById("likhaPickerContainer");
-      if (!likhaContainer) {
-        likhaContainer = document.createElement("div");
-        likhaContainer.id = "likhaPickerContainer";
-        likhaContainer.style.cssText = "width:100%;margin-top:12px;";
-        // Insert after roundInputRow
-        row.parentNode.insertBefore(likhaContainer, row.nextSibling);
-      }
+      // Use the dedicated full-width container outside .panel
+      row.style.display = "none";
+      const likhaContainer = document.getElementById("likhaPickerContainer");
+      likhaContainer.style.display = "";
       likhaContainer.innerHTML = "";
       buildLikhaPicker(names, likhaContainer);
     } else {
