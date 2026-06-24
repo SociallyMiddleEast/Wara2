@@ -1,6 +1,6 @@
 // ---- Config ----
 // Google Apps Script Web App URL (deployed from the linked Google Sheet).
-const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbythleZcAeAJyOY0iY04E2DTvHIluerVWIXBS21EnVnuBv8zSzSLv9VVtdtjsC7alda/exec";
+const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyX91Ln_tbXLDP0xLeYVDP3BWTOxiV7LxpoX6J0US8UaEshraWRSUn7TPWtMhAenrGf/exec";
 
 // ---- Session helpers ----
 function getSession() {
