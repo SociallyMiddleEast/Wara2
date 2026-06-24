@@ -435,36 +435,3 @@ button.full, a.btn.full { width: 100%; text-align: center; }
   .die { width: 64px; height: 64px; padding: 8px; }
   .score-input-row.cols-4 { grid-template-columns: 1fr 1fr; }
 }
-
-/* ═══════════════════════════════════════════════════════
-   ADDITIONS — append these to the bottom of style.css
-   ═══════════════════════════════════════════════════════ */
-
-/* Player picker avatar in setup */
-.player-pick img {
-  display: block;
-}
-
-/* Guest slot buttons inside the <details> section */
-#guestSlotBtns button {
-  margin: 0;
-}
-
-/* Score FAB — make sure it's above everything except the modal */
-#scoreFab {
-  font-family: 'Inter', sans-serif;
-}
-
-/* History card hover on desktop */
-@media (hover: hover) {
-  .hist-card-header:hover .hc-chevron {
-    opacity: .8;
-  }
-}
-
-/* Prevent body scroll when modal is open on iOS */
-body.modal-open {
-  overflow: hidden;
-  position: fixed;
-  width: 100%;
-}
