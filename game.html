@@ -10,9 +10,10 @@
 <link rel="stylesheet" href="style.css">
 <style>
 /* ── Player picker ── */
-.player-pick { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
-.player-pick img { width:38px; height:38px; border-radius:50%; object-fit:cover; border:2px solid var(--gold); background:rgba(0,0,0,0.25); flex-shrink:0; }
-.player-pick select { flex:1; }
+.player-pick { display:flex; align-items:flex-start; gap:10px; margin-bottom:14px; }
+.player-pick img { width:38px; height:38px; border-radius:50%; object-fit:cover; border:2px solid var(--gold); background:rgba(0,0,0,0.25); flex-shrink:0; margin-top:6px; }
+.player-pick select { width:100%; }
+.player-pick input[type="text"] { width:100%; margin-top:0; }
 .player-pick-label { font-size:0.78rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; opacity:.6; margin-bottom:4px; }
 
 /* ── Live badge ── */
@@ -304,13 +305,6 @@
       <div class="player-pick" id="pick2"></div>
       <div class="player-pick-label">Player 2 (partner)</div>
       <div class="player-pick" id="pick3"></div>
-      <details style="margin-top:14px;">
-        <summary style="font-size:.8rem;opacity:.6;cursor:pointer;">Player not in the list? Add a guest name</summary>
-        <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;">
-          <input type="text" id="guestName" placeholder="Guest display name">
-          <div style="display:flex;gap:8px;flex-wrap:wrap;" id="guestSlotBtns"></div>
-        </div>
-      </details>
     </div>
     <div class="error" id="setupError"></div>
     <button class="full" id="startBtn" style="margin-top:18px;">Start game</button>
@@ -500,12 +494,12 @@ async function init() {
       document.getElementById("joinPanel").style.display = "none";
       setupEl.style.display = "";
       if (isTawle) { buildTawlePickers(); }
-      else { buildPlayerPickers(); buildGuestSlotButtons(); }
+      else { buildPlayerPickers(); }
     });
   } else {
     // No live game — populate pickers and show setup
     if (isTawle) { buildTawlePickers(); }
-    else { buildPlayerPickers(); buildGuestSlotButtons(); }
+    else { buildPlayerPickers(); }
   }
 }
 
@@ -644,8 +638,13 @@ function avatarSrc(user) {
 function buildPickerSlot(containerId, slotIndex, dataArr) {
   const container = document.getElementById(containerId);
   container.innerHTML = "";
+
   const img = document.createElement("img");
   img.src = avatarSrc(null);
+
+  const right = document.createElement("div");
+  right.style.cssText = "flex:1;display:flex;flex-direction:column;gap:6px;";
+
   const sel = document.createElement("select");
   const blank = document.createElement("option");
   blank.value = ""; blank.textContent = "— Pick a player —";
@@ -657,20 +656,43 @@ function buildPickerSlot(containerId, slotIndex, dataArr) {
     sel.appendChild(opt);
   });
   const guestOpt = document.createElement("option");
-  guestOpt.value = "__guest__"; guestOpt.textContent = "Guest / custom name…";
+  guestOpt.value = "__guest__"; guestOpt.textContent = "Custom name…";
   sel.appendChild(guestOpt);
+
+  // Inline guest name input — hidden until "Custom name…" is selected
+  const guestInput = document.createElement("input");
+  guestInput.type = "text";
+  guestInput.placeholder = "Type a name…";
+  guestInput.style.display = "none";
+  guestInput.addEventListener("input", () => {
+    const name = guestInput.value.trim();
+    dataArr[slotIndex] = { displayName: name, imageUrl: avatarSrc(null) };
+    img.src = avatarSrc(null);
+  });
+
   sel.addEventListener("change", () => {
     const val = sel.value;
-    if (!val) { dataArr[slotIndex] = {}; img.src = avatarSrc(null); }
-    else if (val === "__guest__") { dataArr[slotIndex] = { displayName:"", imageUrl:avatarSrc(null) }; img.src = avatarSrc(null); }
-    else {
+    if (!val) {
+      dataArr[slotIndex] = {};
+      img.src = avatarSrc(null);
+      guestInput.style.display = "none";
+    } else if (val === "__guest__") {
+      dataArr[slotIndex] = { displayName: guestInput.value.trim(), imageUrl: avatarSrc(null) };
+      img.src = avatarSrc(null);
+      guestInput.style.display = "";
+      guestInput.focus();
+    } else {
       const u = allUsers.find(u => u.username === val);
-      dataArr[slotIndex] = { displayName:`${u.firstName} ${u.lastName}`, imageUrl:avatarSrc(u) };
+      dataArr[slotIndex] = { displayName: `${u.firstName} ${u.lastName}`, imageUrl: avatarSrc(u) };
       img.src = dataArr[slotIndex].imageUrl;
+      guestInput.style.display = "none";
     }
   });
+
+  right.appendChild(sel);
+  right.appendChild(guestInput);
   container.appendChild(img);
-  container.appendChild(sel);
+  container.appendChild(right);
 }
 
 function buildPlayerPickers() {
@@ -684,25 +706,6 @@ function buildTawlePickers() {
   document.getElementById("tawlePickers").style.display = "";
   buildPickerSlot("tawlePick0", 0, tawleSlotData);
   buildPickerSlot("tawlePick1", 1, tawleSlotData);
-}
-
-function buildGuestSlotButtons() {
-  const container = document.getElementById("guestSlotBtns");
-  container.innerHTML = "";
-  for (let i = 0; i < 4; i++) {
-    const btn = document.createElement("button");
-    btn.type = "button"; btn.className = "secondary";
-    btn.style.cssText = "font-size:.75rem;padding:5px 10px;";
-    btn.textContent = `Slot ${i+1}`;
-    btn.addEventListener("click", () => {
-      const name = document.getElementById("guestName").value.trim();
-      if (!name) return;
-      document.getElementById(`pick${i}`).querySelector("select").value = "__guest__";
-      slotData[i] = { displayName:name, imageUrl:avatarSrc(null) };
-      document.getElementById(`pick${i}`).querySelector("img").src = avatarSrc(null);
-    });
-    container.appendChild(btn);
-  }
 }
 
 // ─────────────────────────────────────────────
@@ -748,7 +751,6 @@ function showLiveBadge() {
 }
 
 async function saveLiveGameState() {
-  setSyncStatus("Saving…");
   try {
     const snapshot = {
       type, players: state.players,
@@ -763,9 +765,10 @@ async function saveLiveGameState() {
       gameId = result.gameId;
       showLiveBadge();
     }
-    setSyncStatus("Saved " + new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}));
+    setSyncStatus("Live · " + new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}));
   } catch(e) {
-    setSyncStatus("Save failed: " + e.message, true);
+    console.warn("Live sync failed:", e.message);
+    // Don't show error to user — live sync is optional, game still works
   }
 }
 
