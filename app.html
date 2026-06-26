@@ -9,24 +9,67 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="style.css">
 <style>
-.live-badge {
-  display:inline-flex; align-items:center; gap:5px;
-  background:rgba(111,174,141,.15); border:1px solid #6fae8d;
-  color:#6fae8d; border-radius:20px; padding:3px 10px;
-  font-size:.72rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
-}
-.live-dot { width:6px;height:6px;border-radius:50%;background:#6fae8d;animation:pulse 1.4s infinite; }
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-
-.rejoin-card {
-  border:1px solid #6fae8d; border-radius:12px; padding:16px;
-  background:rgba(111,174,141,.06); margin-bottom:4px;
-  display:flex; align-items:center; justify-content:space-between; gap:12px;
-}
-.rejoin-card .rc-info { flex:1; min-width:0; }
-.rejoin-card .rc-type { font-size:.7rem; text-transform:uppercase; letter-spacing:.07em; opacity:.6; font-weight:600; margin-bottom:3px; }
-.rejoin-card .rc-players { font-size:.88rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.rejoin-card .rc-rounds { font-size:.72rem; opacity:.5; margin-top:2px; }
+  .live-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+    gap: 12px;
+  }
+  .live-item:last-child { border-bottom: none; }
+  .live-meta { flex: 1; min-width: 0; }
+  .live-game-name {
+    font-family: var(--font-display);
+    color: var(--gold-soft);
+    font-size: 1rem;
+  }
+  .live-players {
+    font-size: 0.78rem;
+    opacity: 0.7;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .live-score {
+    font-family: var(--font-num);
+    font-size: 1rem;
+    color: var(--cream);
+    white-space: nowrap;
+    text-align: right;
+  }
+  .live-score .score-label {
+    font-size: 0.68rem;
+    opacity: 0.5;
+    display: block;
+    text-align: right;
+    margin-bottom: 2px;
+  }
+  .live-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #4caf50;
+    margin-right: 6px;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+  .watch-btn {
+    font-size: 0.78rem;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold-soft);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .watch-btn:hover { background: rgba(212,175,55,0.12); }
 </style>
 </head>
 <body>
@@ -36,16 +79,13 @@
     <div class="user-chip" id="userChip"></div>
   </div>
 
-  <!-- Active games panel — shown only if you have a live game -->
-  <div class="panel" id="activeGamesPanel" style="display:none;">
-    <p class="eyebrow">
-      <span class="live-badge"><span class="live-dot"></span>Live</span>
-    </p>
-    <h2 style="margin-top:8px;">Active game</h2>
-    <div id="activeGamesList"></div>
+  <!-- LIVE GAMES panel -->
+  <div class="panel" id="livePanel" style="display:none;">
+    <p class="eyebrow"><span class="live-dot"></span>Live now</p>
+    <h2 style="margin-top:0;">Games in progress</h2>
+    <div id="liveList"><div class="empty-state" style="padding:10px 0;">Loading…</div></div>
   </div>
 
-  <!-- New game -->
   <div class="panel">
     <p class="eyebrow">New game</p>
     <h2 style="margin-top:0;">Pick a game</h2>
@@ -69,11 +109,12 @@
     </div>
   </div>
 
-  <!-- History -->
   <div class="panel">
     <p class="eyebrow">Archive</p>
     <h2 style="margin-top:0;">Game history</h2>
-    <p style="font-size:.85rem;opacity:.75;margin:0 0 14px;">View past games you took part in, filterable by game and opponent.</p>
+    <p style="font-size:0.85rem; opacity:0.75; margin:0 0 14px;">
+      View past games you took part in, filterable by game and opponent.
+    </p>
     <div class="bottom-nav">
       <a class="btn full" href="history.html">View game history</a>
     </div>
@@ -85,56 +126,73 @@
 const session = requireLogin();
 if (session) renderUserChip(session);
 
-const myFirstName = (session.firstName||"").trim().toLowerCase();
-const myFullName  = `${session.firstName||""} ${session.lastName||""}`.trim().toLowerCase();
+const TYPE_LABEL = { tarneeb: "Tarneeb", "400": "400", likha: "Likha", tawle: "Tawle" };
 
-function namesMatch(name) {
-  if (!name) return false;
-  const n = name.trim().toLowerCase();
-  return n === myFirstName || n === myFullName;
-}
-
-const TYPE_LABELS = { tarneeb:"Tarneeb", "400":"400", likha:"Likha", tawle:"Tawle" };
-
-async function checkActiveLiveGames() {
-  try {
-    const res  = await fetch(`${SHEET_API_URL}?action=getLiveGames`);
-    const data = await res.json();
-    if (!Array.isArray(data)) return;
-
-    const mine = data.filter(g =>
-      Array.isArray(g.players) && g.players.some(namesMatch)
-    );
-
-    if (mine.length === 0) return;
-
-    const panel = document.getElementById("activeGamesPanel");
-    const list  = document.getElementById("activeGamesList");
-    panel.style.display = "";
-    list.innerHTML = "";
-
-    mine.forEach(g => {
-      const players = g.players || [];
-      const rounds  = g.state && g.state.rounds ? g.state.rounds.length : 0;
-      const typeLabel = TYPE_LABELS[g.type] || g.type;
-
-      const card = document.createElement("div");
-      card.className = "rejoin-card";
-      card.innerHTML = `
-        <div class="rc-info">
-          <div class="rc-type">${typeLabel}</div>
-          <div class="rc-players">${players.slice(0,2).join(" & ")} vs ${players.slice(2,4).join(" & ")}</div>
-          <div class="rc-rounds">${rounds} round${rounds!==1?"s":""} played · started by ${g.startedBy}</div>
-        </div>
-        <a class="btn" href="game.html?type=${g.type}" style="white-space:nowrap;flex-shrink:0;">Rejoin ↗</a>`;
-      list.appendChild(card);
-    });
-  } catch(e) {
-    // silent — active games panel just won't show
+function scoreSummary(g) {
+  if (g.type === "tawle") return "";
+  const r_perPlayer = (g.type === "400" || g.type === "likha");
+  if (r_perPlayer) {
+    const totals = g.playerTotals || [];
+    const players = g.players || [];
+    if (!totals.length || !players.length) return "";
+    // Show team A vs team B
+    const aScore = Math.max(totals[0] || 0, totals[1] || 0);
+    const bScore = Math.max(totals[2] || 0, totals[3] || 0);
+    return `${aScore} – ${bScore}`;
+  } else {
+    // tarneeb
+    const t = g.totals || {};
+    return `${t.a ?? 0} – ${t.b ?? 0}`;
   }
 }
 
-checkActiveLiveGames();
+function renderLiveGames(games) {
+  const panel = document.getElementById("livePanel");
+  const list = document.getElementById("liveList");
+
+  if (!games.length) {
+    panel.style.display = "none";
+    return;
+  }
+
+  panel.style.display = "";
+  list.innerHTML = games.map(g => {
+    const label = TYPE_LABEL[g.type] || g.type;
+    const players = (g.players || []).join(", ") || "—";
+    const score = scoreSummary(g);
+    const rounds = (g.rounds || []).length;
+    return `
+      <div class="live-item">
+        <div class="live-meta">
+          <div class="live-game-name">${label}</div>
+          <div class="live-players">${players}</div>
+        </div>
+        <div class="live-score">
+          ${score ? `<span class="score-label">round ${rounds}</span>${score}` : `<span style="opacity:0.5; font-size:0.8rem;">round ${rounds}</span>`}
+        </div>
+        <button class="watch-btn" onclick="watchGame('${g.gameId}')">Watch</button>
+      </div>
+    `;
+  }).join("");
+}
+
+function watchGame(gameId) {
+  window.location.href = `game.html?watch=${encodeURIComponent(gameId)}`;
+}
+
+async function loadLiveGames() {
+  try {
+    const games = await fetchLiveGames();
+    renderLiveGames(games);
+  } catch (e) {
+    // silently fail — live games panel just won't show
+    console.warn("Live games unavailable:", e.message);
+  }
+}
+
+// Load immediately, then poll every 15 seconds
+loadLiveGames();
+setInterval(loadLiveGames, 15000);
 </script>
 </body>
 </html>
