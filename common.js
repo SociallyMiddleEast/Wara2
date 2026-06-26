@@ -98,6 +98,7 @@ async function uploadProfileImage(username, base64Data, mimeType) {
   if (data.error) throw new Error(data.error);
   return data.url;
 }
+
 async function updateUser(username, fields) {
   const res = await fetch(SHEET_API_URL, {
     method: "POST",
@@ -107,6 +108,63 @@ async function updateUser(username, fields) {
   if (!res.ok) {
     throw new Error(`Failed to update profile: ${res.status}`);
   }
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+}
+
+// ---- Live Games ----
+
+// Fetch all active live games from the LiveGames sheet tab.
+async function fetchLiveGames() {
+  const res = await fetch(`${SHEET_API_URL}?action=getLiveGames`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Failed to load live games: ${res.status}`);
+  const rows = await res.json();
+  return rows.map(row => {
+    const out = { ...row };
+    ["players", "teams", "rounds", "totals", "playerTotals"].forEach(key => {
+      if (typeof out[key] === "string" && (out[key].trim().startsWith("[") || out[key].trim().startsWith("{"))) {
+        try { out[key] = JSON.parse(out[key]); } catch { /* leave as-is */ }
+      }
+    });
+    return out;
+  });
+}
+
+// Create a new live game row. Returns { gameId } on success.
+async function createLiveGame(gameData) {
+  const res = await fetch(SHEET_API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action: "saveLiveGame", game: gameData })
+  });
+  if (!res.ok) throw new Error(`Failed to create live game: ${res.status}`);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data; // { gameId }
+}
+
+// Update an existing live game row (by gameId).
+async function updateLiveGame(gameId, gameData) {
+  const res = await fetch(SHEET_API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action: "updateLiveGame", gameId, game: gameData })
+  });
+  if (!res.ok) throw new Error(`Failed to update live game: ${res.status}`);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+}
+
+// Mark a live game as finished / remove it from the LiveGames tab.
+async function endLiveGame(gameId) {
+  const res = await fetch(SHEET_API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action: "endLiveGame", gameId })
+  });
+  if (!res.ok) throw new Error(`Failed to end live game: ${res.status}`);
   const data = await res.json();
   if (data.error) throw new Error(data.error);
   return data;
