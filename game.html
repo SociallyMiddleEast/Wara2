@@ -765,6 +765,7 @@ function showLiveBadge() {
 }
 
 async function saveLiveGameState() {
+  setSyncStatus("Saving…");
   try {
     const snapshot = {
       type, players: state.players,
@@ -774,15 +775,16 @@ async function saveLiveGameState() {
     };
     if (gameId) {
       await updateLiveGame(gameId, snapshot);
+      setSyncStatus("Synced ✓");
     } else {
+      setSyncStatus("Creating live game…");
       const result = await createLiveGame(snapshot);
+      setSyncStatus("Live! id=" + (result.gameId||"none").toString().slice(0,8));
       gameId = result.gameId;
       showLiveBadge();
     }
-    setSyncStatus("Live · " + new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}));
   } catch(e) {
-    console.warn("Live sync failed:", e.message);
-    // Don't show error to user — live sync is optional, game still works
+    setSyncStatus("ERR: " + e.message.slice(0, 80), true);
   }
 }
 
