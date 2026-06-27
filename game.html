@@ -438,6 +438,21 @@ let lastRoundCount = 0;    // used to detect remote updates
 // Init
 // ─────────────────────────────────────────────
 async function init() {
+  // Watch mode: ?watch=gameId — show read-only live scoreboard
+  const watchId = new URLSearchParams(window.location.search).get("watch");
+  if (watchId) {
+    document.getElementById("gameTitle").textContent = "Watching…";
+    document.getElementById("watchModeBanner").style.display = "";
+    document.getElementById("watchModeBanner").innerHTML =
+      '<span class="wm-icon">👁️</span><span>Watch mode — scores update automatically every 10 seconds.</span>';
+    document.getElementById("scoringPanel").style.display = "";
+    document.getElementById("addRoundBtn").style.display = "none";
+    document.getElementById("cancelEditBtn").style.display = "none";
+    document.getElementById("roundInputRow").style.display = "none";
+    startWatchMode(watchId);
+    return;
+  }
+
   if (!type || (!RULES[type] && type !== "tawle")) {
     document.getElementById("gameTitle").textContent = "Unknown game";
     return;
@@ -527,7 +542,7 @@ function showJoinPanel(games, gameType) {
   games.forEach(g => {
     const card = document.createElement("div");
     card.className = "join-card";
-    const rounds  = g.state && g.state.rounds ? g.state.rounds.length : 0;
+    const rounds  = Array.isArray(g.rounds) ? g.rounds.length : 0;
     const players = Array.isArray(g.players) ? g.players : [];
     const label   = (RULES[gameType]||{}).label || gameType;
 
@@ -711,7 +726,7 @@ function buildTawlePickers() {
 // ─────────────────────────────────────────────
 // Start game
 // ─────────────────────────────────────────────
-function startGame() {
+async function startGame() {
   const errEl = document.getElementById("setupError");
   errEl.textContent = "";
   const names = [];
@@ -725,7 +740,7 @@ function startGame() {
   if (new Set(names).size < 4) { errEl.textContent = "Each player must be different."; return; }
 
   state.players = names;
-  gameId        = null; // will be assigned by createLiveGame inside saveLiveGameState
+  gameId        = null;
   isScoreKeeper = true;
 
   document.getElementById("setupPanel").style.display = "none";
@@ -736,8 +751,7 @@ function startGame() {
   buildLedgerHeader();
   buildRoundInputs();
   renderLedger();
-  showLiveBadge();
-  saveLiveGameState(); // persist immediately so others can join
+  await saveLiveGameState(); // AWAIT so gameId is set before polling starts
   startPolling();
   document.getElementById("scoreFab").style.display = "flex";
 }
@@ -777,6 +791,42 @@ async function endLiveGameOnServer() {
   try { await endLiveGame(gameId); gameId = null; } catch(e) {}
 }
 
+// ─────────────────────────────────────────────
+// Watch mode (read-only, no gameId needed)
+// ─────────────────────────────────────────────
+async function startWatchMode(watchId) {
+  await pollWatchGame(watchId);
+  setInterval(() => pollWatchGame(watchId), 10000);
+}
+
+async function pollWatchGame(watchId) {
+  try {
+    const games = await fetchLiveGames();
+    const g = games.find(x => x.gameId === watchId);
+    if (!g) {
+      document.getElementById("gameTitle").textContent = "Game ended";
+      document.getElementById("watchModeBanner").innerHTML =
+        '<span>This game has ended.</span> <a href="app.html" class="logout-link" style="margin-left:8px;">← Back</a>';
+      return;
+    }
+    const watchType = g.type;
+    document.getElementById("gameTitle").textContent =
+      ({tarneeb:"Tarneeb","400":"400",likha:"Likha",tawle:"Tawle"}[watchType]||watchType) + " — Live";
+    document.getElementById("scoringHeading").textContent =
+      (g.players||[]).slice(0,2).join("/") + " vs " + (g.players||[]).slice(2,4).join("/");
+
+    // Hydrate state for rendering
+    state.type         = watchType;
+    state.players      = g.players      || [];
+    state.rounds       = g.rounds       || [];
+    state.totals       = g.totals       || {a:0,b:0};
+    state.playerTotals = g.playerTotals || [0,0,0,0];
+
+    buildLedgerHeader();
+    renderLedger();
+  } catch(e) { /* silent */ }
+}
+
 function getSerializableState() {
   return {
     rounds:       state.rounds,
@@ -809,28 +859,27 @@ async function pollLiveGame() {
   try {
     const games  = await fetchLiveGames();
     const remote = games.find(g => g.gameId === gameId);
-    if (!remote || !remote.state) return;
+    if (!remote) return;
 
-    const remoteRounds = remote.state.rounds || [];
-    // Only apply if remote has more rounds than local (someone else added one)
+    // Data is stored flat on the remote object (not nested under .state)
+    const remoteRounds = remote.rounds || [];
     if (remoteRounds.length > state.rounds.length) {
-      applyRemoteState(remote.state);
+      applyRemoteState(remote);
     }
   } catch(e) { /* silent */ }
 }
 
-function applyRemoteState(remoteState) {
-  state.rounds       = remoteState.rounds       || state.rounds;
-  state.totals       = remoteState.totals       || state.totals;
-  state.playerTotals = remoteState.playerTotals || state.playerTotals;
+function applyRemoteState(remote) {
+  state.rounds       = remote.rounds       || state.rounds;
+  state.totals       = remote.totals       || state.totals;
+  state.playerTotals = remote.playerTotals || state.playerTotals;
   renderLedger();
   const timeStr = new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
   setSyncStatus((watchMode ? "👁️ Live · " : "Updated ") + timeStr);
-  // Check if remote already finished the game
-  if (remoteState.finished && !state.finished) {
+  if (remote.finished && !state.finished) {
     state.finished    = true;
-    state.winningTeam = remoteState.winningTeam;
-    state.finalScore  = remoteState.finalScore;
+    state.winningTeam = remote.winningTeam;
+    state.finalScore  = remote.finalScore;
     showWinner(`${(state.winningTeam||[]).join(" & ")} win!`, `Final score: ${state.finalScore}`);
   }
 }
