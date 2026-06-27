@@ -133,15 +133,18 @@ async function fetchLiveGames() {
 
 // Create a new live game row. Returns { gameId } on success.
 async function createLiveGame(gameData) {
+  const body = JSON.stringify({ action: "saveLiveGame", game: gameData });
   const res = await fetch(SHEET_API_URL, {
     method: "POST",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({ action: "saveLiveGame", game: gameData })
+    body
   });
-  if (!res.ok) throw new Error(`Failed to create live game: ${res.status}`);
-  const data = await res.json();
-  if (data.error) throw new Error(data.error);
-  return data; // { gameId }
+  const raw = await res.text();
+  let data;
+  try { data = JSON.parse(raw); } catch { throw new Error("Not JSON: " + raw.slice(0, 150)); }
+  if (data.error) throw new Error("Script error: " + data.error);
+  if (!data.gameId) throw new Error("No gameId in response: " + JSON.stringify(data).slice(0,100));
+  return data;
 }
 
 // Update an existing live game row (by gameId).
@@ -151,8 +154,9 @@ async function updateLiveGame(gameId, gameData) {
     headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify({ action: "updateLiveGame", gameId, game: gameData })
   });
-  if (!res.ok) throw new Error(`Failed to update live game: ${res.status}`);
-  const data = await res.json();
+  const raw = await res.text();
+  let data;
+  try { data = JSON.parse(raw); } catch { throw new Error("Script returned: " + raw.slice(0, 120)); }
   if (data.error) throw new Error(data.error);
   return data;
 }
