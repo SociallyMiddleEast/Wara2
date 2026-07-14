@@ -438,3 +438,10 @@ button.full, a.btn.full { width: 100%; text-align: center; }
   .die { width: 64px; height: 64px; padding: 8px; }
   .score-input-row.cols-4 { grid-template-columns: 1fr 1fr; }
 }
+
+@media (max-width: 480px) {
+  .ledger th, .ledger td { padding: 8px 3px; font-size: 0.92rem; }
+  .ledger th { font-size: 0.72rem; }
+  .ledger .total-row td { font-size: 1.1rem; }
+  .row-action, .ledger td button { padding: 2px !important; font-size: 0.85rem !important; }
+}
