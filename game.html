@@ -468,6 +468,7 @@ async function init() {
   // Wire up button listeners immediately
   document.getElementById("startBtn").addEventListener("click", startGame);
   document.getElementById("addRoundBtn").addEventListener("click", addRound);
+  document.getElementById("tawleStartBtn").addEventListener("click", startTawle);
 
   // Show loading indicator inside the setup panel while we fetch
   const isTawle = type === "tawle";
@@ -629,7 +630,6 @@ function showSetup() {
 function showTawleSetup() {
   document.getElementById("tawleSetupPanel").style.display = "";
   // Pickers built after data loads in init()
-  document.getElementById("tawleStartBtn").addEventListener("click", startTawle);
 }
 
 function buildEyebrow() {
