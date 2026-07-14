@@ -231,10 +231,13 @@ button.full, a.btn.full { width: 100%; text-align: center; }
 .ledger {
   border: 1px solid var(--line);
   border-radius: 10px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 .ledger table {
   width: 100%;
+  min-width: max-content;
   border-collapse: collapse;
   font-family: var(--font-num);
 }
@@ -284,7 +287,7 @@ button.full, a.btn.full { width: 100%; text-align: center; }
   margin-top: 14px;
 }
 .score-input-row.cols-4 {
-  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 }
 .score-input-row .field label { margin-top: 0; }
 
