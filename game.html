@@ -1009,11 +1009,11 @@ function buildLikhaPicker(names, container) {
 
   names.forEach((name, i) => {
     const row = document.createElement("div");
-    row.style.cssText = "display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.18);border:1px solid var(--line);border-radius:12px;padding:10px 12px;box-sizing:border-box;";
+    row.style.cssText = "display:flex;flex-wrap:wrap;align-items:center;gap:6px;background:rgba(0,0,0,.18);border:1px solid var(--line);border-radius:12px;padding:10px 12px;box-sizing:border-box;";
 
     // Left: name + stepper
     const left = document.createElement("div");
-    left.style.cssText = "display:flex;flex-direction:column;gap:4px;flex:1;min-width:0;";
+    left.style.cssText = "display:flex;flex-direction:column;gap:4px;flex:1 1 120px;min-width:120px;";
 
     const nameEl = document.createElement("div");
     nameEl.textContent = name.split(" ")[0];
@@ -1021,12 +1021,12 @@ function buildLikhaPicker(names, container) {
     left.appendChild(nameEl);
 
     const stepper = document.createElement("div");
-    stepper.style.cssText = "display:flex;align-items:stretch;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:10px;overflow:hidden;height:48px;";
+    stepper.style.cssText = "display:flex;align-items:stretch;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:10px;overflow:hidden;height:44px;";
 
     const btnMinus = document.createElement("button");
     btnMinus.type = "button";
     btnMinus.textContent = "−";
-    btnMinus.style.cssText = "width:48px;height:48px;flex-shrink:0;background:none;border:none;color:inherit;font-size:1.6rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;";
+    btnMinus.style.cssText = "width:40px;height:44px;flex-shrink:0;background:none;border:none;color:inherit;font-size:1.6rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;";
     btnMinus.addEventListener("click", () => stepHeart(i, -1));
 
     const inner = document.createElement("div");
@@ -1059,7 +1059,7 @@ function buildLikhaPicker(names, container) {
     // Q♠ toggle
     const queen = document.createElement("div");
     queen.id = "queen-" + i;
-    queen.style.cssText = "width:58px;height:58px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,.2);cursor:pointer;user-select:none;transition:all .15s;-webkit-tap-highlight-color:transparent;";
+    queen.style.cssText = "width:50px;height:50px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,.2);cursor:pointer;user-select:none;transition:all .15s;-webkit-tap-highlight-color:transparent;";
     queen.innerHTML = "<span style='font-size:1.05rem;font-weight:700;line-height:1;'>Q♠</span><span style='font-size:.65rem;opacity:.4;'>+13</span>";
     queen.addEventListener("click", () => toggleQueen(i));
     row.appendChild(queen);
@@ -1074,7 +1074,7 @@ function buildLikhaPicker(names, container) {
 
     // Score
     const score = document.createElement("div");
-    score.style.cssText = "width:50px;height:58px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border-radius:10px;background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.2);";
+    score.style.cssText = "width:44px;height:50px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border-radius:10px;background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.2);";
     const sval = document.createElement("span");
     sval.id = "pscore-" + i;
     sval.textContent = "0";
